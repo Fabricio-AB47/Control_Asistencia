@@ -1,0 +1,265 @@
+/* src/scss/pages/reporte.scss */
+@use "sass:color";
+@use "../base/variables" as v;   // ajusta rutas si es necesario
+@use "../base/mixins" as m;
+
+/* Accesibilidad (ocultar visual, disponible para lectores) */
+.sr-only {
+  position: absolute;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0,0,0,0);
+  white-space: nowrap; border: 0;
+}
+
+/* ===========================
+   BOTONES (base + variantes)
+   =========================== */
+%btn-base {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: .5rem;
+  padding: .65rem 1.1rem;
+  border-radius: .6rem;
+  font-family: v.$fuente_principal;
+  font-weight: v.$bold;
+  line-height: 1;
+  text-decoration: none;
+  border: 0;
+  cursor: pointer;
+  transition: transform .15s ease, box-shadow .2s ease, background-color .2s ease, color .2s ease;
+  will-change: transform, box-shadow;
+
+  &:hover  { transform: translateY(-1px); }
+  &:active { transform: translateY(0);    }
+}
+
+.btn {
+  @extend %btn-base;
+  background: v.$celeste;
+  color: v.$blanco;
+  box-shadow: 0 1px 2px rgba(0,0,0,.06);
+
+  &:hover  { background: color.adjust(v.$celeste, $lightness: -6%); }
+  &:active { background: color.adjust(v.$celeste, $lightness: -10%); }
+}
+
+.btn--primary { @extend .btn; }
+
+.btn--danger {
+  @extend %btn-base;
+  background: v.$rojo;
+  color: v.$blanco;
+  box-shadow: 0 1px 2px rgba(0,0,0,.08);
+
+  &:hover  { background: color.adjust(v.$rojo, $lightness: -6%); }
+  &:active { background: color.adjust(v.$rojo, $lightness: -10%); }
+}
+
+.btn--ghost {
+  @extend %btn-base;
+  background: transparent;
+  color: v.$negro;
+  border: 2px solid v.$celeste;
+
+  &:hover  { background: v.$celeste; color: v.$blanco; }
+  &:active { background: color.adjust(v.$celeste, $lightness: -8%); color: v.$blanco; }
+}
+
+/* ===========================
+   HEADER con botones de menú
+   =========================== */
+.header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid v.$gris;
+
+  &__brand {
+    display: flex; align-items: center; gap: .75rem;
+  }
+
+  .logo {
+    width: 52px; height: auto; display: block;
+    @include m.up(tablet) { width: 60px; }
+  }
+
+  &__welcome {
+    margin: 0;
+    color: v.$negro;
+    @include m.fluid-type(1.1rem, 1.5rem);
+  }
+
+  &__menu {
+    display: flex; gap: .5rem; flex-wrap: wrap;
+
+    /* En móviles: apilar y centrar */
+    @include m.down(tablet) {
+      width: 100%;
+      justify-content: center;
+
+      .btn { width: 100%; max-width: 320px; }
+    }
+  }
+}
+
+/* ===========================
+   LAYOUT DEL REPORTE
+   =========================== */
+.report {
+  font-family: v.$fuente_principal;
+  color: v.$gris_oscuro;
+  padding: 1.25rem;
+
+  @include m.up(tablet) { padding: 1.75rem; }
+  @include m.up(desktop){ padding: 2.5rem; }
+
+  &__title {
+    margin: .5rem 0 1rem;
+    color: v.$negro;
+    @include m.fluid-type(1.25rem, 1.8rem); // ~20px → ~29px
+  }
+}
+
+/* ===========================
+   FILTROS
+   =========================== */
+.filter {
+  display: grid;
+  gap: .75rem;
+  align-items: end;
+  margin-bottom: 1rem;
+
+  @include m.up(tablet) {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+
+  &__field {
+    display: flex; flex-direction: column;
+    font-size: .9rem; color: v.$gris_oscuro;
+
+    input[type="date"] {
+      padding: .55rem .75rem;
+      border: 1px solid v.$gris;
+      border-radius: .55rem;
+      background: v.$blanco;
+      outline: none;
+
+      &:focus {
+        border-color: v.$celeste;
+        box-shadow: 0 0 0 3px rgba(141, 187, 199, .25);
+      }
+    }
+  }
+
+  /* El botón de filtrar ya usa .btn .btn--primary */
+  &__btn {
+    @include m.up(tablet) { grid-column: span 1; }
+  }
+
+  .note {
+    color: v.$gris_oscuro; font-size: .9rem;
+    @include m.up(tablet) { grid-column: 1 / -1; }
+  }
+}
+
+/* ===========================
+   TABLA (responsive con scroll)
+   =========================== */
+.table-container {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border: 1px solid v.$gris;
+  border-radius: .75rem;
+  background: v.$blanco;
+}
+
+.table {
+  width: 100%;
+  min-width: 760px;
+  border-collapse: collapse;
+
+  th, td {
+    padding: .65rem .75rem;
+    border-bottom: 1px solid #eaeaea;
+    vertical-align: top;
+    font-size: .9rem;
+    color: v.$gris_oscuro;
+  }
+
+  th {
+    text-align: left;
+    background: #f6f6f6;
+    position: sticky; top: 0; z-index: 1;
+    color: v.$negro; font-weight: v.$bold;
+  }
+
+  tr:last-child td { border-bottom: 0; }
+
+  &__head th:first-child { border-top-left-radius: .75rem; }
+  &__head th:last-child  { border-top-right-radius: .75rem; }
+
+  &__foot td {
+    background: #fbfbfb;
+    font-weight: v.$bold;
+  }
+  &__foot-label { text-align: right; }
+  &__foot-value { color: v.$negro; }
+}
+
+/* ===========================
+   BADGES & CHIPS
+   =========================== */
+.badge {
+  display: inline-block;
+  padding: .15rem .5rem;
+  border-radius: 1rem;
+  font-size: .75rem;
+  border: 1px solid #ddd;
+  background: #fafafa;
+  color: v.$gris_oscuro;
+  margin-left: .25rem;
+}
+
+.chip {
+  display: inline-block;
+  padding: .25rem .5rem;
+  border-radius: .5rem;
+  font-size: .8rem;
+  font-weight: v.$bold;
+  white-space: nowrap;
+
+  &--warn { background: #fff3cd; color: #7a5c00; } // tardanza
+  &--info { background: #e8f4ff; color: #0b5cad; } // extra/anticipos
+}
+
+/* ===========================
+   NOTAS
+   =========================== */
+.note {
+  margin-top: .9rem;
+  color: v.$gris_oscuro;
+  font-size: .9rem;
+  line-height: 1.45;
+}
+
+/* ===========================
+   AJUSTES RESPONSIVE FINOS
+   =========================== */
+@include m.down(tablet) {
+  .table th, .table td { padding: .55rem .6rem; font-size: .85rem; }
+
+  .filter {
+    grid-template-columns: 1fr 1fr;
+    &__btn { grid-column: 1 / -1; justify-self: start; }
+  }
+}
+
+@include m.up(desktop) {
+  .table th, .table td { padding: .75rem 1rem; font-size: .95rem; }
+}

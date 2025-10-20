@@ -1,0 +1,240 @@
+@use '../base/variables' as v;
+@use '../base/mixins' as m;
+
+/* ==== CONTENEDORES (ajustes suaves) ==== */
+.registro-wrapper {
+  min-height: 50%;          /* ocupa toda la pantalla */
+  display: flex;              /* activa flex */
+  align-items: center;        /* centra vertical */
+  justify-content: center;    /* centra horizontal */
+  padding: 0.5rem;
+
+  @include m.tablet { padding: 2rem; }
+  @include m.desktop { padding: 3rem; }
+}
+
+.registro-container {
+  width: 100%;
+  max-width: 340px;
+  margin: 0 auto;
+  padding: 0.5rem;
+  background: #2b2b2b;
+  border-radius: 12px;
+  box-shadow: 0 0 15px rgba(0,0,0,.3);
+  text-align: center;
+
+  @include m.tablet { max-width: 720px; padding: 2rem; }
+  @include m.desktop { max-width: 900px; padding: 2.5rem; }
+}
+
+.registro-titulo {
+  margin-bottom: 1.2rem;
+  color: #ddd;
+  font-weight: v.$bold;
+  font-size: clamp(1.6rem, 2vw, 2.2rem);
+}
+
+/* ==== GRID DEL FORM ==== */
+.registro-formulario {
+  display: grid;
+  grid-template-columns: 1fr; /* móvil: 1 col */
+  gap: 1rem;
+
+  @include m.tablet {
+    grid-template-columns: repeat(2, minmax(280px, 1fr)); /* tablet+: 2 cols */
+    gap: 1.4rem;
+  }
+  @include m.desktop { gap: 1.6rem; }
+}
+
+/* Forzar que algunos bloques ocupen todo el ancho */
+.registro-alerta,
+.registro-botones {
+  grid-column: 1 / -1;
+}
+
+/* ==== CAMPOS ==== */
+.registro-campo {
+  display: flex;
+  flex-direction: column;
+  gap: .45rem;
+
+  label {
+    color: #eee;
+    font-weight: v.$bold;
+    font-size: .95rem;
+    letter-spacing: .2px;
+  }
+
+  .help-text {
+    font-size: .85rem;
+    color: #bfbfbf;
+  }
+
+  /* grupo con icono a la izquierda/derecha */
+  .input-group {
+    position: relative;
+
+    .icon-left, .icon-right {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      line-height: 1;
+      font-size: 1rem;
+      color: #9aa0a6;
+      pointer-events: none;
+    }
+    .icon-left { left: .8rem; }
+    .icon-right { right: .8rem; }
+
+    input, select {
+      padding-left: 2.4rem; /* deja espacio al icono izquierdo */
+      &.no-left-icon { padding-left: .9rem; }
+    }
+  }
+}
+
+/* Inputs & selects */
+.registro-campo input,
+.registro-campo select {
+  width: 100%;
+  padding: .75rem .9rem;
+  font-size: 1rem;
+  color: #f2f2f2;
+  background-color: #343434;
+  border: 1px solid #4b4b4b;
+  border-radius: 8px;
+  outline: none;
+  transition: border-color .2s ease, box-shadow .2s ease, background-color .2s ease;
+
+  &::placeholder { color: #9aa0a6; }
+
+  &:hover {
+    border-color: #5a5a5a;
+  }
+
+  &:focus {
+    border-color: v.$celeste;
+    box-shadow: 0 0 0 3px rgba(141,187,199,.25);
+    background-color: #3a3a3a;
+  }
+
+  &:disabled {
+    opacity: .7;
+    cursor: not-allowed;
+    background-color: #2f2f2f;
+  }
+}
+
+/* Select: quita “salto” del arrow en algunos navegadores */
+.registro-campo select {
+  appearance: none; /* estandar */
+  background-image:
+    linear-gradient(45deg, transparent 50%, #9aa0a6 50%),
+    linear-gradient(135deg, #9aa0a6 50%, transparent 50%),
+    linear-gradient(to right, transparent, transparent);
+  background-position:
+    calc(100% - 20px) calc(50% - 3px),
+    calc(100% - 15px) calc(50% - 3px),
+    100% 0;
+  background-size: 5px 5px, 5px 5px, 2.5em 2.5em;
+  background-repeat: no-repeat;
+  padding-right: 2.4rem;
+}
+
+/* Requeridos: marca en etiqueta */
+.registro-campo label.required::after {
+  content: " *";
+  color: v.$rojo;
+}
+
+/* Estados de validación (client-side) */
+.registro-campo input:required:invalid,
+.registro-campo select:required:invalid,
+.is-invalid {
+  border-color: #ff6b6b !important;
+  box-shadow: 0 0 0 3px rgba(255,107,107,.15) !important;
+}
+
+.is-valid {
+  border-color: #47d17e !important;
+  box-shadow: 0 0 0 3px rgba(71,209,126,.15) !important;
+}
+
+/* Mensajes arriba del form */
+.registro-alerta {
+  padding: .9rem 1rem;
+  border-radius: 8px;
+  text-align: center;
+  font-weight: v.$bold;
+  font-size: .95rem;
+  border: 1px solid transparent;
+  background: #2f2f2f;
+  color: #e6e6e6;
+
+  &.error  { background-color: #3b2222; border-color: #8a2e2e; color: #ffdede; }
+  &.exito  { background-color: #1f3a2b; border-color: #2a7b55; color: #d6ffea; }
+  &.info   { background-color: #223343; border-color: #2f6f97; color: #d7ecff; }
+  &.warn   { background-color: #3a301f; border-color: #9a7b2a; color: #fff3cd; }
+}
+
+/* ==== BOTONERA ==== */
+.registro-botones {
+  display: flex;
+  flex-direction: column; /* móvil */
+  gap: 1rem;
+  align-items: stretch;
+  margin-top: 1.4rem;
+
+  @include m.tablet {
+    flex-direction: row;       /* tablet+ */
+    align-items: center;
+    justify-content: space-between;
+  }
+}
+
+.registro-btn {
+  background-color: #004080;
+  color: v.$blanco;
+  padding: .75rem 1.4rem;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: v.$bold;
+  text-align: center;
+  cursor: pointer;
+  transition: background-color .2s ease, transform .05s ease, box-shadow .2s ease;
+
+  &:hover   { background-color: #0059b3; }
+  &:active  { transform: translateY(1px); }
+  &:focus-visible { outline: 3px solid rgba(0,123,255,.35); outline-offset: 2px; }
+}
+
+.registro-btn.volver {
+  background-color: #777;
+  &:hover { background-color: #8a8a8a; }
+}
+
+/* Variante secundaria por si la necesitas */
+.registro-btn.secundario {
+  background-color: #3c3c3c;
+  &:hover { background-color: #4a4a4a; }
+}
+
+/* ==== UTILIDADES ==== */
+/* Campos en fila completa cuando lo necesites */
+.full-row { grid-column: 1 / -1; }
+
+/* Compactar verticalmente un bloque */
+.compacto { margin-top: .5rem !important; margin-bottom: .5rem !important; }
+
+/* Añade un separador visual entre grupos */
+.form-seccion {
+  grid-column: 1 / -1;
+  margin: .6rem 0 1.2rem;
+  border-bottom: 1px dashed #4a4a4a;
+  padding-bottom: .6rem;
+  color: #cfcfcf;
+  font-weight: v.$bold;
+  letter-spacing: .2px;
+}

@@ -1,0 +1,79 @@
+ @use '../base/variables' as v;      
+       
+       /* Estilos para el contenedor del login */
+        .login-main {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding-top: 15rem;
+            background-color: v.$blanco;
+        }
+        
+        .login-container {
+            background-color: v.$gris_oscuro;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 400px;
+        }
+        
+        /* Título del formulario */
+        .login-title {
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 24px;
+            color: v.$negro;
+        }
+        
+        /* Estilos para los campos del formulario */
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-label {
+            display: block;
+            font-size: 14px;
+            margin-bottom: 5px;
+            color:v.$negro;
+        }
+        
+        .form-input {
+            width: 100%;
+            padding: 10px;
+            font-size: 16px;
+            border: 1px solid v.$gris;
+            border-radius: 4px;
+            background-color: v.$gris;
+        }
+        
+        .form-input:focus {
+            border-color: v.$gris_oscuro;
+            outline: none;
+        }
+        
+        /* Estilos para el botón de login */
+        .login-btn {
+            width: 100%;
+            padding: 12px;
+            background-color: v.$gris;
+            color:v.$negro;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        
+        .login-btn:hover {
+            background-color: v.$rojo;
+            color:v.$blanco;
+        }
+        
+        /* Estilos adicionales para la página */
+        @media (max-width: 480px) {
+            .login-container {
+                padding: 20px;
+                max-width: 90%;
+            }
+        }

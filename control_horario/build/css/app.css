@@ -1,0 +1,1464 @@
+@charset "UTF-8";
+/* Importación de Fuentes de Google Fonts */
+@import url("https://fonts.googleapis.com/css?family=Lato:300,400,700,900");
+/* Rojo principal */
+/* Celeste secundario */
+/* Blanco */
+/* Gris claro */
+/* Gris oscuro */
+/*Fuente negro*/
+/* Tamaños de Media Queries (Breakpoints) */
+html {
+  font-size: 62.5%;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+}
+
+*, *:before, *:after {
+  box-sizing: inherit;
+}
+
+body {
+  font-family: "Lato", sans-serif;
+  font-size: 1.6rem;
+  line-height: 1.8;
+  display: flex;
+  flex-direction: column;
+}
+
+p {
+  color: #000000;
+  font-size: 2rem;
+}
+
+.contenedor {
+  width: 95%;
+  max-width: 120rem;
+  margin: 0 auto;
+}
+
+a {
+  text-decoration: none;
+}
+
+img,
+picture {
+  width: 100%;
+  display: block;
+}
+
+h1, h2, h3 {
+  font-family: "Lato", sans-serif;
+  margin: 2.5rem 0;
+  font-weight: 300;
+  text-align: center;
+}
+
+h1 {
+  font-size: 3.8rem;
+}
+
+h2 {
+  font-size: 3.4rem;
+}
+
+h3 {
+  font-size: 3rem;
+}
+
+h4 {
+  font-size: 2.6rem;
+}
+
+/*! normalize.css v8.0.1 | MIT License | github.com/necolas/normalize.css */
+/* Document
+   ========================================================================== */
+/**
+ * 1. Correct the line height in all browsers.
+ * 2. Prevent adjustments of font size after orientation changes in iOS.
+ */
+html {
+  line-height: 1.15; /* 1 */
+  -webkit-text-size-adjust: 100%; /* 2 */
+}
+
+/* Sections
+   ========================================================================== */
+/**
+ * Remove the margin in all browsers.
+ */
+body {
+  margin: 0;
+}
+
+/**
+ * Render the `main` element consistently in IE.
+ */
+main {
+  display: block;
+}
+
+/**
+ * Correct the font size and margin on `h1` elements within `section` and
+ * `article` contexts in Chrome, Firefox, and Safari.
+ */
+h1 {
+  font-size: 2em;
+  margin: 0.67em 0;
+}
+
+/* Grouping content
+   ========================================================================== */
+/**
+ * 1. Add the correct box sizing in Firefox.
+ * 2. Show the overflow in Edge and IE.
+ */
+hr {
+  box-sizing: content-box; /* 1 */
+  height: 0; /* 1 */
+  overflow: visible; /* 2 */
+}
+
+/**
+ * 1. Correct the inheritance and scaling of font size in all browsers.
+ * 2. Correct the odd `em` font sizing in all browsers.
+ */
+pre {
+  font-family: monospace, monospace; /* 1 */
+  font-size: 1em; /* 2 */
+}
+
+/* Text-level semantics
+   ========================================================================== */
+/**
+ * Remove the gray background on active links in IE 10.
+ */
+a {
+  background-color: transparent;
+}
+
+/**
+ * 1. Remove the bottom border in Chrome 57-
+ * 2. Add the correct text decoration in Chrome, Edge, IE, Opera, and Safari.
+ */
+abbr[title] {
+  border-bottom: none; /* 1 */
+  text-decoration: underline; /* 2 */
+  text-decoration: underline dotted; /* 2 */
+}
+
+/**
+ * Add the correct font weight in Chrome, Edge, and Safari.
+ */
+b,
+strong {
+  font-weight: bolder;
+}
+
+/**
+ * 1. Correct the inheritance and scaling of font size in all browsers.
+ * 2. Correct the odd `em` font sizing in all browsers.
+ */
+code,
+kbd,
+samp {
+  font-family: monospace, monospace; /* 1 */
+  font-size: 1em; /* 2 */
+}
+
+/**
+ * Add the correct font size in all browsers.
+ */
+small {
+  font-size: 80%;
+}
+
+/**
+ * Prevent `sub` and `sup` elements from affecting the line height in
+ * all browsers.
+ */
+sub,
+sup {
+  font-size: 75%;
+  line-height: 0;
+  position: relative;
+  vertical-align: baseline;
+}
+
+sub {
+  bottom: -0.25em;
+}
+
+sup {
+  top: -0.5em;
+}
+
+/* Embedded content
+   ========================================================================== */
+/**
+ * Remove the border on images inside links in IE 10.
+ */
+img {
+  border-style: none;
+}
+
+/* Forms
+   ========================================================================== */
+/**
+ * 1. Change the font styles in all browsers.
+ * 2. Remove the margin in Firefox and Safari.
+ */
+button,
+input,
+optgroup,
+select,
+textarea {
+  font-family: inherit; /* 1 */
+  font-size: 100%; /* 1 */
+  line-height: 1.15; /* 1 */
+  margin: 0; /* 2 */
+}
+
+/**
+ * Show the overflow in IE.
+ * 1. Show the overflow in Edge.
+ */
+button,
+input { /* 1 */
+  overflow: visible;
+}
+
+/**
+ * Remove the inheritance of text transform in Edge, Firefox, and IE.
+ * 1. Remove the inheritance of text transform in Firefox.
+ */
+button,
+select { /* 1 */
+  text-transform: none;
+}
+
+/**
+ * Correct the inability to style clickable types in iOS and Safari.
+ */
+button,
+[type=button],
+[type=reset],
+[type=submit] {
+  -webkit-appearance: button;
+}
+
+/**
+ * Remove the inner border and padding in Firefox.
+ */
+button::-moz-focus-inner,
+[type=button]::-moz-focus-inner,
+[type=reset]::-moz-focus-inner,
+[type=submit]::-moz-focus-inner {
+  border-style: none;
+  padding: 0;
+}
+
+/**
+ * Restore the focus styles unset by the previous rule.
+ */
+button:-moz-focusring,
+[type=button]:-moz-focusring,
+[type=reset]:-moz-focusring,
+[type=submit]:-moz-focusring {
+  outline: 1px dotted ButtonText;
+}
+
+/**
+ * Correct the padding in Firefox.
+ */
+fieldset {
+  padding: 0.35em 0.75em 0.625em;
+}
+
+/**
+ * 1. Correct the text wrapping in Edge and IE.
+ * 2. Correct the color inheritance from `fieldset` elements in IE.
+ * 3. Remove the padding so developers are not caught out when they zero out
+ *    `fieldset` elements in all browsers.
+ */
+legend {
+  box-sizing: border-box; /* 1 */
+  color: inherit; /* 2 */
+  display: table; /* 1 */
+  max-width: 100%; /* 1 */
+  padding: 0; /* 3 */
+  white-space: normal; /* 1 */
+}
+
+/**
+ * Add the correct vertical alignment in Chrome, Firefox, and Opera.
+ */
+progress {
+  vertical-align: baseline;
+}
+
+/**
+ * Remove the default vertical scrollbar in IE 10+.
+ */
+textarea {
+  overflow: auto;
+}
+
+/**
+ * 1. Add the correct box sizing in IE 10.
+ * 2. Remove the padding in IE 10.
+ */
+[type=checkbox],
+[type=radio] {
+  box-sizing: border-box; /* 1 */
+  padding: 0; /* 2 */
+}
+
+/**
+ * Correct the cursor style of increment and decrement buttons in Chrome.
+ */
+[type=number]::-webkit-inner-spin-button,
+[type=number]::-webkit-outer-spin-button {
+  height: auto;
+}
+
+/**
+ * 1. Correct the odd appearance in Chrome and Safari.
+ * 2. Correct the outline style in Safari.
+ */
+[type=search] {
+  -webkit-appearance: textfield; /* 1 */
+  outline-offset: -2px; /* 2 */
+}
+
+/**
+ * Remove the inner padding in Chrome and Safari on macOS.
+ */
+[type=search]::-webkit-search-decoration {
+  -webkit-appearance: none;
+}
+
+/**
+ * 1. Correct the inability to style clickable types in iOS and Safari.
+ * 2. Change font properties to `inherit` in Safari.
+ */
+::-webkit-file-upload-button {
+  -webkit-appearance: button; /* 1 */
+  font: inherit; /* 2 */
+}
+
+/* Interactive
+   ========================================================================== */
+/*
+ * Add the correct display in Edge, IE 10+, and Firefox.
+ */
+details {
+  display: block;
+}
+
+/*
+ * Add the correct display in all browsers.
+ */
+summary {
+  display: list-item;
+}
+
+/* Misc
+   ========================================================================== */
+/**
+ * Add the correct display in IE 10+.
+ */
+template {
+  display: none;
+}
+
+/**
+ * Add the correct display in IE 10.
+ */
+[hidden] {
+  display: none;
+}
+
+.seccion {
+  margin-top: 2.5rem;
+  margin-bottom: 2.5rem;
+}
+
+.contenido-centrado {
+  max-width: 80rem;
+}
+
+.alinear-derecha {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.main-control {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 80%;
+  max-width: 400px;
+  height: auto;
+  margin: 2rem auto;
+  padding: 2rem;
+  background-color: #f4f4f4;
+  border: 2px solid #ddd;
+  border-radius: 10px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+.main-control .container {
+  text-align: center;
+  margin: 0;
+  padding: 0;
+  width: 100%;
+}
+.main-control h3 {
+  font-size: 2rem;
+  margin-bottom: 1rem;
+}
+.main-control p {
+  font-size: 1.4rem;
+  margin-bottom: 2rem;
+}
+.main-control .buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  align-items: center;
+  margin-top: 2rem;
+  padding: 2rem;
+  background-color: #f4f4f4;
+  border: 2px solid #ddd;
+  border-radius: 10px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+.main-control .buttons form {
+  display: inline-block;
+}
+.main-control .buttons button {
+  padding: 1rem 4rem;
+  font-size: 1.2rem;
+  font-weight: bold;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+  width: auto;
+}
+.main-control .buttons button:hover {
+  transform: scale(1.05);
+}
+.main-control .buttons button:active {
+  transform: scale(0.95);
+}
+.main-control .buttons .btn-ingreso {
+  background-color: #4caf50;
+  color: #fff;
+}
+.main-control .buttons .btn-ingreso:hover {
+  background-color: #45a049;
+}
+.main-control .buttons .btn-salida-almuerzo {
+  background-color: #ff9800;
+  color: #fff;
+}
+.main-control .buttons .btn-salida-almuerzo:hover {
+  background-color: #e68900;
+}
+.main-control .buttons .btn-regreso-almuerzo {
+  background-color: #2196f3;
+  color: #fff;
+}
+.main-control .buttons .btn-regreso-almuerzo:hover {
+  background-color: #1976d2;
+}
+.main-control .buttons .btn-salida-laboral {
+  background-color: #f44336;
+  color: #fff;
+}
+.main-control .buttons .btn-salida-laboral:hover {
+  background-color: #d32f2f;
+}
+
+/* src/scss/base/_mixins.scss */
+/** Media Queries **/
+/* --- Mixins genéricos compatibles con otros parciales --- */
+/* Mobile-first: min-width */
+/* Hasta antes de un breakpoint */
+/* Entre dos breakpoints (incluye min y excluye max) */
+/* Helper rápido para un mismo prop en diferentes tamaños */
+/* Tipografía fluida */
+/* Botón utilitario (respetando tus variables) */
+/* Grid utilitario */
+/* ===== Header ===== */
+.header {
+  background-color: #C7C6C6;
+  padding: 0.6rem;
+  text-align: center;
+  border: 4px solid #777777;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  /* En tablet+ el header compensa el ancho de la sidebar */
+}
+@media (min-width: 768px) {
+  .header {
+    justify-content: flex-start;
+    padding-left: calc(1rem + 250px);
+  }
+}
+@media (min-width: 1024px) {
+  .header {
+    padding-left: calc(1rem + 280px);
+  }
+}
+
+/* Logo */
+.logo {
+  width: 120px;
+  height: auto;
+}
+@media (min-width: 480px) {
+  .logo {
+    width: 140px;
+  }
+}
+@media (min-width: 768px) {
+  .logo {
+    width: 150px;
+  }
+}
+@media (min-width: 1024px) {
+  .logo {
+    width: 170px;
+  }
+}
+
+/* ===== Menú Responsive ===== */
+.contenedor-menu {
+  /* Paleta */
+  /* --- Móvil (default): barra superior sticky --- */
+  position: sticky;
+  top: 0;
+  left: 0;
+  z-index: 1000;
+  background-color: #C7C6C6;
+  color: #000000;
+  width: 100%;
+  height: auto;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1rem;
+  border-bottom: 4px solid #777777;
+  /* scroll horizontal si hay muchos items */
+  overflow-x: auto;
+  white-space: nowrap;
+  /* Título del menú */
+  /* Enlaces */
+  /* Hover del contenedor (ligero) */
+  /* Submenú (si lo usas) */
+  /* --- Tablet+: Sidebar fija a la izquierda --- */
+}
+.contenedor-menu h2 {
+  font-size: 1.2rem;
+  margin: 0 1rem 0 0;
+  color: #000000;
+}
+@media (min-width: 480px) {
+  .contenedor-menu h2 {
+    font-size: 1.3rem;
+  }
+}
+@media (min-width: 768px) {
+  .contenedor-menu h2 {
+    font-size: 1.4rem;
+    margin: 0 0 1rem 0;
+  }
+}
+@media (min-width: 1024px) {
+  .contenedor-menu h2 {
+    font-size: 1.5rem;
+  }
+}
+.contenedor-menu a {
+  text-decoration: none;
+  color: #000000;
+  font-size: 1rem;
+  display: inline-block;
+  padding: 0.6rem 1rem;
+  text-align: center;
+  border-radius: 0.5rem;
+  transition: background-color 0.25s ease, color 0.25s ease, transform 0.1s ease;
+  /* Opción activa */
+}
+.contenedor-menu a:hover {
+  background-color: #007bff;
+  color: #ffffff;
+}
+.contenedor-menu a:active {
+  transform: translateY(1px);
+}
+.contenedor-menu a:focus-visible {
+  outline: 2px solid #007bff;
+  outline-offset: 2px;
+}
+.contenedor-menu a[aria-current=page], .contenedor-menu a.is-active {
+  background-color: #007bff;
+  color: #ffffff;
+}
+.contenedor-menu:hover {
+  background-color: #C7C6C6;
+}
+.contenedor-menu .submenu {
+  display: none;
+  flex-direction: column;
+  width: 100%;
+}
+.contenedor-menu .submenu a {
+  background-color: #444;
+  padding: 0.8rem;
+  text-align: left;
+  transition: background-color 0.25s ease, color 0.25s ease;
+}
+.contenedor-menu .submenu a:hover {
+  background-color: #0056b3;
+  color: #ffffff;
+}
+.contenedor-menu .menu-item {
+  position: relative;
+  width: auto;
+  /* En móvil no abrimos submenú por hover (táctil),
+     pero lo dejamos para desktop/tablet */
+}
+@media (min-width: 768px) {
+  .contenedor-menu .menu-item {
+    width: 100%;
+  }
+  .contenedor-menu .menu-item:hover .submenu {
+    display: flex;
+  }
+  .contenedor-menu .menu-item:hover > a {
+    background-color: #007bff;
+    color: #ffffff;
+  }
+}
+@media (min-width: 768px) {
+  .contenedor-menu {
+    position: fixed;
+    top: 0;
+    left: 0;
+    flex-direction: column;
+    align-items: stretch;
+    white-space: normal;
+    overflow-y: auto;
+    overflow-x: hidden;
+    width: 250px;
+    height: 100vh;
+    padding: 1.5rem 1rem;
+    border: 4px solid #777777;
+    border-right-width: 4px;
+    border-bottom: 0;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  }
+  .contenedor-menu a {
+    display: block;
+    width: 100%;
+    padding: 0.85rem 1rem;
+    font-size: 1.05rem;
+    border-radius: 0.6rem;
+  }
+}
+@media (min-width: 1024px) {
+  .contenedor-menu {
+    width: 280px;
+  }
+  .contenedor-menu a {
+    font-size: 1.1rem;
+    padding: 0.95rem 1.2rem;
+  }
+}
+
+/* ===== Utilidad: desplazar el contenido cuando hay sidebar fija ===== */
+/* Úsala en tu contenedor principal: <main class="with-sidebar">… */
+@media (min-width: 768px) {
+  .with-sidebar {
+    margin-left: 250px;
+  }
+}
+@media (min-width: 1024px) {
+  .with-sidebar {
+    margin-left: 280px;
+  }
+}
+
+/* Alternativamente, si tu contenedor principal es .main-control: */
+@media (min-width: 768px) {
+  .main-control {
+    margin-left: 250px;
+  }
+}
+@media (min-width: 1024px) {
+  .main-control {
+    margin-left: 280px;
+  }
+}
+
+/* ==== CONTENEDORES (ajustes suaves) ==== */
+.registro-wrapper {
+  min-height: 50%; /* ocupa toda la pantalla */
+  display: flex; /* activa flex */
+  align-items: center; /* centra vertical */
+  justify-content: center; /* centra horizontal */
+  padding: 0.5rem;
+}
+@media (min-width: 768px) {
+  .registro-wrapper {
+    padding: 2rem;
+  }
+}
+@media (min-width: 1024px) {
+  .registro-wrapper {
+    padding: 3rem;
+  }
+}
+
+.registro-container {
+  width: 100%;
+  max-width: 340px;
+  margin: 0 auto;
+  padding: 0.5rem;
+  background: #2b2b2b;
+  border-radius: 12px;
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
+  text-align: center;
+}
+@media (min-width: 768px) {
+  .registro-container {
+    max-width: 720px;
+    padding: 2rem;
+  }
+}
+@media (min-width: 1024px) {
+  .registro-container {
+    max-width: 900px;
+    padding: 2.5rem;
+  }
+}
+
+.registro-titulo {
+  margin-bottom: 1.2rem;
+  color: #ddd;
+  font-weight: 700;
+  font-size: clamp(1.6rem, 2vw, 2.2rem);
+}
+
+/* ==== GRID DEL FORM ==== */
+.registro-formulario {
+  display: grid;
+  grid-template-columns: 1fr; /* móvil: 1 col */
+  gap: 1rem;
+}
+@media (min-width: 768px) {
+  .registro-formulario {
+    grid-template-columns: repeat(2, minmax(280px, 1fr)); /* tablet+: 2 cols */
+    gap: 1.4rem;
+  }
+}
+@media (min-width: 1024px) {
+  .registro-formulario {
+    gap: 1.6rem;
+  }
+}
+
+/* Forzar que algunos bloques ocupen todo el ancho */
+.registro-alerta,
+.registro-botones {
+  grid-column: 1/-1;
+}
+
+/* ==== CAMPOS ==== */
+.registro-campo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  /* grupo con icono a la izquierda/derecha */
+}
+.registro-campo label {
+  color: #eee;
+  font-weight: 700;
+  font-size: 0.95rem;
+  letter-spacing: 0.2px;
+}
+.registro-campo .help-text {
+  font-size: 0.85rem;
+  color: #bfbfbf;
+}
+.registro-campo .input-group {
+  position: relative;
+}
+.registro-campo .input-group .icon-left, .registro-campo .input-group .icon-right {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  line-height: 1;
+  font-size: 1rem;
+  color: #9aa0a6;
+  pointer-events: none;
+}
+.registro-campo .input-group .icon-left {
+  left: 0.8rem;
+}
+.registro-campo .input-group .icon-right {
+  right: 0.8rem;
+}
+.registro-campo .input-group input, .registro-campo .input-group select {
+  padding-left: 2.4rem; /* deja espacio al icono izquierdo */
+}
+.registro-campo .input-group input.no-left-icon, .registro-campo .input-group select.no-left-icon {
+  padding-left: 0.9rem;
+}
+
+/* Inputs & selects */
+.registro-campo input,
+.registro-campo select {
+  width: 100%;
+  padding: 0.75rem 0.9rem;
+  font-size: 1rem;
+  color: #f2f2f2;
+  background-color: #343434;
+  border: 1px solid #4b4b4b;
+  border-radius: 8px;
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+}
+.registro-campo input::placeholder,
+.registro-campo select::placeholder {
+  color: #9aa0a6;
+}
+.registro-campo input:hover,
+.registro-campo select:hover {
+  border-color: #5a5a5a;
+}
+.registro-campo input:focus,
+.registro-campo select:focus {
+  border-color: #8DBBC7;
+  box-shadow: 0 0 0 3px rgba(141, 187, 199, 0.25);
+  background-color: #3a3a3a;
+}
+.registro-campo input:disabled,
+.registro-campo select:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  background-color: #2f2f2f;
+}
+
+/* Select: quita “salto” del arrow en algunos navegadores */
+.registro-campo select {
+  appearance: none; /* estandar */
+  background-image: linear-gradient(45deg, transparent 50%, #9aa0a6 50%), linear-gradient(135deg, #9aa0a6 50%, transparent 50%), linear-gradient(to right, transparent, transparent);
+  background-position: calc(100% - 20px) calc(50% - 3px), calc(100% - 15px) calc(50% - 3px), 100% 0;
+  background-size: 5px 5px, 5px 5px, 2.5em 2.5em;
+  background-repeat: no-repeat;
+  padding-right: 2.4rem;
+}
+
+/* Requeridos: marca en etiqueta */
+.registro-campo label.required::after {
+  content: " *";
+  color: #931913;
+}
+
+/* Estados de validación (client-side) */
+.registro-campo input:required:invalid,
+.registro-campo select:required:invalid,
+.is-invalid {
+  border-color: #ff6b6b !important;
+  box-shadow: 0 0 0 3px rgba(255, 107, 107, 0.15) !important;
+}
+
+.is-valid {
+  border-color: #47d17e !important;
+  box-shadow: 0 0 0 3px rgba(71, 209, 126, 0.15) !important;
+}
+
+/* Mensajes arriba del form */
+.registro-alerta {
+  padding: 0.9rem 1rem;
+  border-radius: 8px;
+  text-align: center;
+  font-weight: 700;
+  font-size: 0.95rem;
+  border: 1px solid transparent;
+  background: #2f2f2f;
+  color: #e6e6e6;
+}
+.registro-alerta.error {
+  background-color: #3b2222;
+  border-color: #8a2e2e;
+  color: #ffdede;
+}
+.registro-alerta.exito {
+  background-color: #1f3a2b;
+  border-color: #2a7b55;
+  color: #d6ffea;
+}
+.registro-alerta.info {
+  background-color: #223343;
+  border-color: #2f6f97;
+  color: #d7ecff;
+}
+.registro-alerta.warn {
+  background-color: #3a301f;
+  border-color: #9a7b2a;
+  color: #fff3cd;
+}
+
+/* ==== BOTONERA ==== */
+.registro-botones {
+  display: flex;
+  flex-direction: column; /* móvil */
+  gap: 1rem;
+  align-items: stretch;
+  margin-top: 1.4rem;
+}
+@media (min-width: 768px) {
+  .registro-botones {
+    flex-direction: row; /* tablet+ */
+    align-items: center;
+    justify-content: space-between;
+  }
+}
+
+.registro-btn {
+  background-color: #004080;
+  color: #ffffff;
+  padding: 0.75rem 1.4rem;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 700;
+  text-align: center;
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.05s ease, box-shadow 0.2s ease;
+}
+.registro-btn:hover {
+  background-color: #0059b3;
+}
+.registro-btn:active {
+  transform: translateY(1px);
+}
+.registro-btn:focus-visible {
+  outline: 3px solid rgba(0, 123, 255, 0.35);
+  outline-offset: 2px;
+}
+
+.registro-btn.volver {
+  background-color: #777;
+}
+.registro-btn.volver:hover {
+  background-color: #8a8a8a;
+}
+
+/* Variante secundaria por si la necesitas */
+.registro-btn.secundario {
+  background-color: #3c3c3c;
+}
+.registro-btn.secundario:hover {
+  background-color: #4a4a4a;
+}
+
+/* ==== UTILIDADES ==== */
+/* Campos en fila completa cuando lo necesites */
+.full-row {
+  grid-column: 1/-1;
+}
+
+/* Compactar verticalmente un bloque */
+.compacto {
+  margin-top: 0.5rem !important;
+  margin-bottom: 0.5rem !important;
+}
+
+/* Añade un separador visual entre grupos */
+.form-seccion {
+  grid-column: 1/-1;
+  margin: 0.6rem 0 1.2rem;
+  border-bottom: 1px dashed #4a4a4a;
+  padding-bottom: 0.6rem;
+  color: #cfcfcf;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+}
+
+/* === Centro absoluto del módulo "Registro de Control Horario" === */
+main.main-control {
+  /* anula width/max-width del estilo antiguo */
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  min-height: 100vh; /* ocupa el alto de la ventana */
+  display: grid;
+  place-items: center; /* centra perfecto X/Y */
+  padding: 1.5rem;
+}
+@media (min-width: 768px) {
+  main.main-control {
+    padding: 2rem;
+  }
+}
+@media (min-width: 1024px) {
+  main.main-control {
+    padding: 2.5rem;
+  }
+}
+main.main-control > .container {
+  /* tarjeta centrada y responsiva */
+  width: min(90vw, 720px);
+  margin-inline: auto; /* centra horizontal */
+  text-align: center;
+  background: #f4f4f4;
+  border: 2px solid #ddd;
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+  padding: 1.6rem;
+}
+@media (min-width: 768px) {
+  main.main-control > .container {
+    width: min(88vw, 820px);
+    padding: 2rem;
+  }
+}
+@media (min-width: 1024px) {
+  main.main-control > .container {
+    width: min(80vw, 900px);
+    padding: 2.25rem;
+  }
+}
+
+/* Botonera centrada (sin tocar colores, que ya los tienes en otro archivo) */
+main.main-control .buttons {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center; /* centra filas */
+  align-items: center;
+  gap: 1rem 1.2rem;
+  margin-top: 1rem;
+}
+@media (min-width: 768px) {
+  main.main-control .buttons {
+    gap: 1.2rem 1.5rem;
+  }
+}
+@media (min-width: 1024px) {
+  main.main-control .buttons {
+    gap: 1.4rem 1.8rem;
+  }
+}
+main.main-control .buttons form {
+  display: flex;
+  justify-content: center;
+  margin: 0;
+}
+main.main-control .buttons button {
+  min-width: 220px;
+}
+
+/* Si usas offset por sidebar en otras páginas, evita aplicarlo aquí */
+.with-sidebar.main-control {
+  margin-left: 0;
+} /* quita desplazamiento si lo heredabas */
+/* src/scss/pages/reporte.scss */
+/* Accesibilidad (ocultar visual, disponible para lectores) */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ===========================
+   BOTONES (base + variantes)
+   =========================== */
+.btn--ghost, .btn--danger, .btn, .btn--primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.65rem 1.1rem;
+  border-radius: 0.6rem;
+  font-family: "Lato", sans-serif;
+  font-weight: 700;
+  line-height: 1;
+  text-decoration: none;
+  border: 0;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.2s ease, background-color 0.2s ease, color 0.2s ease;
+  will-change: transform, box-shadow;
+}
+.btn--ghost:hover, .btn--danger:hover, .btn:hover, .btn--primary:hover {
+  transform: translateY(-1px);
+}
+.btn--ghost:active, .btn--danger:active, .btn:active, .btn--primary:active {
+  transform: translateY(0);
+}
+
+.btn, .btn--primary {
+  background: #8DBBC7;
+  color: #ffffff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+}
+.btn:hover, .btn--primary:hover {
+  background: rgb(120.48, 174.76, 188.92);
+}
+.btn:active, .btn--primary:active {
+  background: rgb(106.8, 166.6, 182.2);
+}
+
+.btn--danger {
+  background: #931913;
+  color: #ffffff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+}
+.btn--danger:hover {
+  background: rgb(119.9024096386, 20.3915662651, 15.4975903614);
+}
+.btn--danger:active {
+  background: rgb(101.8373493976, 17.3192771084, 13.1626506024);
+}
+
+.btn--ghost {
+  background: transparent;
+  color: #000000;
+  border: 2px solid #8DBBC7;
+}
+.btn--ghost:hover {
+  background: #8DBBC7;
+  color: #ffffff;
+}
+.btn--ghost:active {
+  background: rgb(113.64, 170.68, 185.56);
+  color: #ffffff;
+}
+
+/* ===========================
+   HEADER con botones de menú
+   =========================== */
+.header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid #C7C6C6;
+}
+.header__brand {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+.header .logo {
+  width: 52px;
+  height: auto;
+  display: block;
+}
+@media (min-width: 768px) {
+  .header .logo {
+    width: 60px;
+  }
+}
+.header__welcome {
+  margin: 0;
+  color: #000000;
+  font-size: clamp(1.1rem, 1.1rem + (1.5rem - 1.1rem) * (100vw - 360px) / (1280px - 360px), 1.5rem);
+}
+.header__menu {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  /* En móviles: apilar y centrar */
+}
+@media (max-width: 767.98px) {
+  .header__menu {
+    width: 100%;
+    justify-content: center;
+  }
+  .header__menu .btn, .header__menu .btn--primary {
+    width: 100%;
+    max-width: 320px;
+  }
+}
+
+/* ===========================
+   LAYOUT DEL REPORTE
+   =========================== */
+.report {
+  font-family: "Lato", sans-serif;
+  color: #777777;
+  padding: 1.25rem;
+}
+@media (min-width: 768px) {
+  .report {
+    padding: 1.75rem;
+  }
+}
+@media (min-width: 1024px) {
+  .report {
+    padding: 2.5rem;
+  }
+}
+.report__title {
+  margin: 0.5rem 0 1rem;
+  color: #000000;
+  font-size: clamp(1.25rem, 1.25rem + (1.8rem - 1.25rem) * (100vw - 360px) / (1280px - 360px), 1.8rem);
+}
+
+/* ===========================
+   FILTROS
+   =========================== */
+.filter {
+  display: grid;
+  gap: 0.75rem;
+  align-items: end;
+  margin-bottom: 1rem;
+  /* El botón de filtrar ya usa .btn .btn--primary */
+}
+@media (min-width: 768px) {
+  .filter {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+}
+.filter__field {
+  display: flex;
+  flex-direction: column;
+  font-size: 0.9rem;
+  color: #777777;
+}
+.filter__field input[type=date] {
+  padding: 0.55rem 0.75rem;
+  border: 1px solid #C7C6C6;
+  border-radius: 0.55rem;
+  background: #ffffff;
+  outline: none;
+}
+.filter__field input[type=date]:focus {
+  border-color: #8DBBC7;
+  box-shadow: 0 0 0 3px rgba(141, 187, 199, 0.25);
+}
+@media (min-width: 768px) {
+  .filter__btn {
+    grid-column: span 1;
+  }
+}
+.filter .note {
+  color: #777777;
+  font-size: 0.9rem;
+}
+@media (min-width: 768px) {
+  .filter .note {
+    grid-column: 1/-1;
+  }
+}
+
+/* ===========================
+   TABLA (responsive con scroll)
+   =========================== */
+.table-container {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border: 1px solid #C7C6C6;
+  border-radius: 0.75rem;
+  background: #ffffff;
+}
+
+.table {
+  width: 100%;
+  min-width: 760px;
+  border-collapse: collapse;
+}
+.table th, .table td {
+  padding: 0.65rem 0.75rem;
+  border-bottom: 1px solid #eaeaea;
+  vertical-align: top;
+  font-size: 0.9rem;
+  color: #777777;
+}
+.table th {
+  text-align: left;
+  background: #f6f6f6;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  color: #000000;
+  font-weight: 700;
+}
+.table tr:last-child td {
+  border-bottom: 0;
+}
+.table__head th:first-child {
+  border-top-left-radius: 0.75rem;
+}
+.table__head th:last-child {
+  border-top-right-radius: 0.75rem;
+}
+.table__foot td {
+  background: #fbfbfb;
+  font-weight: 700;
+}
+.table__foot-label {
+  text-align: right;
+}
+.table__foot-value {
+  color: #000000;
+}
+
+/* ===========================
+   BADGES & CHIPS
+   =========================== */
+.badge {
+  display: inline-block;
+  padding: 0.15rem 0.5rem;
+  border-radius: 1rem;
+  font-size: 0.75rem;
+  border: 1px solid #ddd;
+  background: #fafafa;
+  color: #777777;
+  margin-left: 0.25rem;
+}
+
+.chip {
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.5rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.chip--warn {
+  background: #fff3cd;
+  color: #7a5c00;
+}
+.chip--info {
+  background: #e8f4ff;
+  color: #0b5cad;
+}
+
+/* ===========================
+   NOTAS
+   =========================== */
+.note {
+  margin-top: 0.9rem;
+  color: #777777;
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+/* ===========================
+   AJUSTES RESPONSIVE FINOS
+   =========================== */
+@media (max-width: 767.98px) {
+  .table th, .table td {
+    padding: 0.55rem 0.6rem;
+    font-size: 0.85rem;
+  }
+  .filter {
+    grid-template-columns: 1fr 1fr;
+  }
+  .filter__btn {
+    grid-column: 1/-1;
+    justify-self: start;
+  }
+}
+@media (min-width: 1024px) {
+  .table th, .table td {
+    padding: 0.75rem 1rem;
+    font-size: 0.95rem;
+  }
+}
+/* Estilos para el contenedor del login */
+.login-main {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding-top: 15rem;
+  background-color: #ffffff;
+}
+
+.login-container {
+  background-color: #777777;
+  padding: 40px;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  max-width: 400px;
+}
+
+/* Título del formulario */
+.login-title {
+  text-align: center;
+  margin-bottom: 20px;
+  font-size: 24px;
+  color: #000000;
+}
+
+/* Estilos para los campos del formulario */
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-label {
+  display: block;
+  font-size: 14px;
+  margin-bottom: 5px;
+  color: #000000;
+}
+
+.form-input {
+  width: 100%;
+  padding: 10px;
+  font-size: 16px;
+  border: 1px solid #C7C6C6;
+  border-radius: 4px;
+  background-color: #C7C6C6;
+}
+
+.form-input:focus {
+  border-color: #777777;
+  outline: none;
+}
+
+/* Estilos para el botón de login */
+.login-btn {
+  width: 100%;
+  padding: 12px;
+  background-color: #C7C6C6;
+  color: #000000;
+  border: none;
+  border-radius: 4px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.login-btn:hover {
+  background-color: #931913;
+  color: #ffffff;
+}
+
+/* Estilos adicionales para la página */
+@media (max-width: 480px) {
+  .login-container {
+    padding: 20px;
+    max-width: 90%;
+  }
+}/*# sourceMappingURL=app.css.map */

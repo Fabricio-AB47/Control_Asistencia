@@ -1,0 +1,93 @@
+<?php
+session_start();
+
+// Verificar si el usuario ha iniciado sesión
+if (!isset($_SESSION['id_usuario'])) {
+    header("Location: /control_horario/view/login.php");
+    exit();
+}
+
+// Establecer tiempo de expiración de la sesión a 15 minutos
+$tiempo_inactividad = 900; // 15 minutos en segundos
+
+// Comprobar si la sesión ha expirado
+if (isset($_SESSION['ultimo_acceso'])) {
+    $tiempo_transcurrido = time() - $_SESSION['ultimo_acceso'];
+    if ($tiempo_transcurrido > $tiempo_inactividad) {
+        // Destruir la sesión y redirigir al login si ha expirado
+        session_unset();
+        session_destroy();
+        header("Location: ../../../index.php?error=sesion_expirada");
+        exit();
+    }
+}
+
+// Actualizar el tiempo del último acceso
+$_SESSION['ultimo_acceso'] = time();
+
+// Regenerar el ID de sesión periódicamente para mayor seguridad
+if (!isset($_SESSION['regenerar_id']) || time() - $_SESSION['regenerar_id'] > 300) { // Cada 5 minutos
+    session_regenerate_id(true);
+    $_SESSION['regenerar_id'] = time();
+}
+
+// Asegurarse de que las variables de sesión estén disponibles
+$nombre = $_SESSION['nombre'] ?? 'Usuario'; // Valor por defecto 'Usuario' si no está definido
+$tipo_usuario = $_SESSION['tipo'] ?? 'Desconocido'; // Valor por defecto 'Desconocido' si no está definido
+?>
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - <?php echo htmlspecialchars($tipo_usuario); ?></title>
+    <link rel="stylesheet" href="../../../build/css/app.css">
+</head>
+<body>
+    <header class="header">
+        <img src="../../../src/img/intec.png" alt="Logo Intec" class="logo">
+        <h1>Bienvenido, <?php echo htmlspecialchars($nombre); ?></h1>
+        <nav class="contenedor-menu">
+          
+               <a href="../admin/dashboard_adm.php">Inicio</a>
+               <a href="../admin/registro_usuario.php">Registrar nuevo usuario</a>
+               <a href="../admin/horario_personal.php">Registro horario de ingreso personal</a>
+               <a href="../admin/horario_sl_personal.php">Registro horario de salida personal</a>
+               <a href="../../../logout.php">Cerrar sesión</a>
+        
+        </nav>
+    </header>
+
+    <main>
+        <section>
+            <h2>Panel de Control</h2>
+           
+        </section>
+    </main>
+ <!-- Script de inactividad -->
+ <script>
+        let tiempoInactividad = 0;
+        const tiempoMaximo = 900; // 15 minutos = 900 segundos
+
+        function resetInactividad() {
+            tiempoInactividad = 0;
+        }
+
+        window.onload = resetInactividad;
+        document.onmousemove = resetInactividad;
+        document.onkeypress = resetInactividad;
+        document.onclick = resetInactividad;
+        document.onscroll = resetInactividad;
+
+        setInterval(() => {
+            tiempoInactividad++;
+            if (tiempoInactividad >= tiempoMaximo) {
+                alert("Tu sesión ha expirado por inactividad.");
+                window.location.href = "/control_horario/logout.php";
+            }
+        }, 1000); // 1 segundo
+    </script>
+
+</body>
+</html>

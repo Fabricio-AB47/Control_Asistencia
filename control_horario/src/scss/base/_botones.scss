@@ -1,0 +1,108 @@
+
+.main-control {
+    display: flex;
+    justify-content: center;  // Centra los elementos hijos horizontalmente
+    align-items: center;  // Centra los elementos hijos verticalmente
+    width: 80%;  // Ajusta el ancho al 80% del contenedor principal
+    max-width: 400px;  // Ancho máximo para que no se expanda demasiado
+    height: auto;  // Altura ajustable según el contenido
+    margin: 2rem auto;  // Centra el contenedor y le da un margen superior e inferior
+    padding: 2rem;
+    background-color: #f4f4f4;  // Fondo para el contenedor de botones
+    border: 2px solid #ddd;  // Borde alrededor del contenedor
+    border-radius: 10px;  // Esquinas redondeadas del borde
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);  // Sombra suave alrededor del recuadro
+
+    .container {
+        text-align: center;
+        margin: 0;
+        padding: 0;
+        width: 100%;
+    }
+
+    h3 {
+        font-size: 2rem;  // Aumentar el tamaño del encabezado
+        margin-bottom: 1rem;
+    }
+
+    p {
+        font-size: 1.4rem;  // Aumentar el tamaño del texto
+        margin-bottom: 2rem;
+    }
+
+    .buttons {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        align-items: center;
+        margin-top: 2rem;
+        padding: 2rem;
+        background-color: #f4f4f4;  // Fondo para el contenedor de botones
+        border: 2px solid #ddd;  // Borde alrededor del contenedor
+        border-radius: 10px;  // Esquinas redondeadas del borde
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);  // Sombra suave alrededor del recuadro
+
+        form {
+            display: inline-block;
+        }
+
+        button {
+            padding: 1rem 4rem;  // Aumentar el tamaño del padding en los lados para hacerlo más largo
+            font-size: 1.2rem;  // Aumentar el tamaño de la fuente del botón
+            font-weight: bold;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            width: auto;  // Eliminar el ancho fijo, el tamaño dependerá del contenido y el padding
+
+            &:hover {
+                transform: scale(1.05);
+            }
+
+            &:active {
+                transform: scale(0.95);
+            }
+        }
+
+        // Estilos para el botón de ingreso
+        .btn-ingreso {
+            background-color: #4caf50;
+            color: #fff;
+
+            &:hover {
+                background-color: #45a049;
+            }
+        }
+
+        // Estilos para el botón de salida al almuerzo
+        .btn-salida-almuerzo {
+            background-color: #ff9800;
+            color: #fff;
+
+            &:hover {
+                background-color: #e68900;
+            }
+        }
+
+        // Estilos para el botón de regreso del almuerzo
+        .btn-regreso-almuerzo {
+            background-color: #2196f3;
+            color: #fff;
+
+            &:hover {
+                background-color: #1976d2;
+            }
+        }
+
+        // Estilos para el botón de salida laboral
+        .btn-salida-laboral {
+            background-color: #f44336;
+            color: #fff;
+
+            &:hover {
+                background-color: #d32f2f;
+            }
+        }
+    }
+}

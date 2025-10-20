@@ -1,0 +1,25 @@
+{
+  "name": "control_horario",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "dev": "gulp"
+  },
+  "keywords": [],
+  "author": "Fabricio Borja",
+  "license": "ISC",
+  "description": "Control horario administrativos INTEC",
+  "devDependencies": {
+    "gulp-sass": "^6.0.1",
+    "sass": "^1.87.0"
+  },
+  "dependencies": {
+    "glob": "^11.0.2",
+    "gulp": "^5.0.0",
+    "gulp-concat": "^2.6.1",
+    "gulp-rename": "^2.0.0",
+    "gulp-terser": "^2.1.0",
+    "sharp": "^0.34.1",
+    "terser": "^5.39.0"
+  }
+}
