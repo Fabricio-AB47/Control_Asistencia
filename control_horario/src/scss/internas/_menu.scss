@@ -1,0 +1,95 @@
+// Menú desplegable responsive para .contenedor-menu
+@use '../base/variables' as v;
+
+// Menú bajo el logo, colapsado como botón
+.header {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: .5rem;
+}
+
+.contenedor-menu, .header__menu {
+  --menu-bg: #ffffff;
+  --menu-fg: #111827;
+  --menu-accent: #600000; // acorde al tema existente
+  --menu-border: #e5e7eb;
+  --menu-shadow: 0 10px 24px rgba(0,0,0,.15);
+
+  position: relative;
+  z-index: 10;
+  box-sizing: border-box;
+  display: inline-block;
+  background: transparent;
+  width: auto;
+  min-width: 0;
+
+  // ocultar título si existe
+  h2 { display: none; }
+
+  // botón real (inyectado por JS)
+  .menu__btn {
+    display: inline-block;
+    color: #ffffff;
+    background: var(--menu-accent);
+    padding: .5rem .8rem;
+    border-radius: 10px;
+    border: 1px solid rgba(0,0,0,.06);
+    box-shadow: var(--menu-shadow);
+    text-align: center;
+    font-weight: 600;
+    cursor: pointer;
+    user-select: none;
+    white-space: nowrap;
+  }
+
+  // lista de enlaces (dropdown)
+  a {
+    display: none;
+    color: var(--menu-fg);
+    text-decoration: none;
+    background: var(--menu-bg);
+    padding: .55rem .85rem;
+    border-radius: 8px;
+    border: 1px solid var(--menu-border);
+    transition: background .15s ease, color .15s ease;
+    min-width: 220px;
+    white-space: nowrap;
+
+    &:hover,
+    &:focus-visible {
+      background: rgba(96,0,0,.06);
+      color: var(--menu-accent);
+      outline: none;
+    }
+  }
+
+  // estado desplegado al hover/focus: muestra dropdown con ancho contenido
+  &.is-open,
+  &:focus-within {
+    background: var(--menu-bg);
+    border: 1px solid var(--menu-border);
+    border-radius: 12px;
+    padding: .5rem;
+    margin-top: .25rem;
+    box-shadow: var(--menu-shadow);
+
+    // pila vertical
+    a { display: block; }
+  }
+
+  // limitar altura si hay muchos ítems
+  &.is-open,
+  &:focus-within {
+    max-height: calc(100vh - 48px);
+    overflow: auto;
+  }
+}
+
+// Modo desplegable en pantallas pequeñas: colapsa enlaces tras un "toggle" visual
+@media (max-width: 768px) {
+  .contenedor-menu, .header__menu { a { width: 100%; } }
+}
+
+// Si existían reglas de sidebar, neutralizarlas para este menú tipo botón
+.with-sidebar, .main-control { margin-left: 0 !important; }

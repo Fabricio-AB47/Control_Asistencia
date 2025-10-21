@@ -13,6 +13,15 @@ date_default_timezone_set('America/Guayaquil');
 
 $db = conexion(); // PDO
 $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+$BASE = appBasePath();
+header('Content-Type: text/plain; charset=UTF-8');
+
+// CSRF: validar token de la sesión vs cabecera/cuerpo
+$csrfToken = $_SERVER['HTTP_X_CSRF_TOKEN'] ?? ($_POST['csrf_token'] ?? '');
+if (empty($_SESSION['token']) || !is_string($csrfToken) || !hash_equals($_SESSION['token'], $csrfToken)) {
+    http_response_code(403);
+    exit('CSRF inválido');
+}
 
 $uid   = (int)$_SESSION['id_usuario'];
 $hoy   = date('Y-m-d');
@@ -32,6 +41,14 @@ if (!is_array($input) || empty($input)) $input = $_POST;
 $latitud   = $input['latitud']   ?? null;
 $longitud  = $input['longitud']  ?? null;
 $direccion = isset($input['direccion']) ? trim((string)$input['direccion']) : null;
+// Truncar dirección para evitar errores por longitud de columna en BD
+if ($direccion !== null && $direccion !== '') {
+    if (function_exists('mb_substr')) {
+        $direccion = mb_substr($direccion, 0, 190, 'UTF-8');
+    } else {
+        $direccion = substr($direccion, 0, 190);
+    }
+}
 
 if ($latitud === null || $longitud === null || $direccion === null || $direccion === '') {
     http_response_code(400);
@@ -104,7 +121,6 @@ try {
     if ($st->fetch()) {
         $db->rollBack();
         echo "ℹ️ Ya existe un registro de ingreso para hoy.";
-        echo "<script>setTimeout(function(){window.location.href='/control_horario/view/partials/admisiones/dashboard.php';},1000);</script>";
         exit();
     }
 
@@ -151,12 +167,12 @@ try {
     $db->commit();
 
     echo "✅ Ingreso registrado con estado: " . htmlspecialchars($detalleEstado, ENT_QUOTES, 'UTF-8');
-    echo "<script>setTimeout(function(){window.location.href='/control_horario/view/partials/admisiones/dashboard.php';},1000);</script>";
     exit();
 
 } catch (Throwable $e) {
     if ($db->inTransaction()) $db->rollBack();
+    error_log('registrar_ingreso(admisiones): ' . $e->getMessage());
     http_response_code(500);
-    echo "Error al procesar la solicitud: " . $e->getMessage();
+    echo "Error al procesar la solicitud.";
     exit();
 }

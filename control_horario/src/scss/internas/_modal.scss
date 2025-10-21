@@ -1,0 +1,54 @@
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.45);
+  display: grid;
+  place-items: center;
+  z-index: 1200;
+}
+
+// Respeta el atributo [hidden] del HTML para ocultar el modal
+.modal-overlay[hidden] {
+  display: none !important;
+}
+
+.modal {
+  background: #fff;
+  width: min(520px, 92vw);
+  border-radius: 14px;
+  box-shadow: 0 20px 40px rgba(0,0,0,.25);
+  border: 1px solid #e5e7eb;
+  overflow: hidden;
+}
+.modal__title {
+  font-weight: 700;
+  padding: 14px 18px;
+  background: #600000;
+  color: #fff;
+}
+.modal__body {
+  padding: 18px;
+  color: #111827;
+  line-height: 1.45;
+  max-height: 50vh;
+  overflow: auto;
+}
+.modal__actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  padding: 12px 18px 16px;
+  background: #fafafa;
+  border-top: 1px solid #eef0f2;
+}
+.modal__btn {
+  background: #600000;
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 10px 16px;
+  cursor: pointer;
+}
+.modal__btn.secondary {
+  background: #374151;
+}

@@ -1,10 +1,10 @@
 <?php
 session_start();
 date_default_timezone_set('America/Guayaquil');
+require_once __DIR__ . '/../../../core/conexion.php';
 
-if (!isset($_SESSION['id_usuario'])) { header("Location: /control_horario/view/login.php"); exit(); }
+if (!isset($_SESSION['id_usuario'])) { header('Location: ' . appBasePath() . '/index.php'); exit(); }
 
-require '../../../core/conexion.php';
 $db = conexion();
 $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
@@ -109,7 +109,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['registrar'])) {
 /* --- URL de inicio para "Regresar" --- */
 $homeUrl = $isAdmin
   ? '../admin/dashboard_adm.php'
-  : '../../../index.php';
+  : appBasePath() . '/index.php';
 ?>
 <!doctype html>
 <html lang="es">

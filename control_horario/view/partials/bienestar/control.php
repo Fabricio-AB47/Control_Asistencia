@@ -1,18 +1,19 @@
 <?php
 session_start();
+require_once __DIR__ . '/../../../core/conexion.php';
 
 // ==== Configuración de sesión / seguridad ====
 $tiempo_inactividad_maximo = 900; // 15 min
 
 if (!isset($_SESSION['id_usuario'])) {
-    header("Location: ../../login.php");
+    header('Location: ' . appBasePath() . '/index.php');
     exit();
 }
 
 if (isset($_SESSION['ultimo_acceso']) && (time() - $_SESSION['ultimo_acceso']) > $tiempo_inactividad_maximo) {
     session_unset();
     session_destroy();
-    header("Location: ../../../index.php");
+    header('Location: ' . appBasePath() . '/index.php');
     exit();
 }
 $_SESSION['ultimo_acceso'] = time();
@@ -33,18 +34,33 @@ $tipo_usuario = $_SESSION['tipo']     ?? 'Desconocido';
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <meta name="csrf-token" content="<?php echo htmlspecialchars($_SESSION['token'], ENT_QUOTES, 'UTF-8'); ?>">
   <link rel="stylesheet" href="../../../build/css/app.css">
+  <script src="../../../build/js/menu.js" defer></script>
   <title>Control Horario</title>
 </head>
 <body>
 <header class="header">
-  <img src="../../../src/img/intec.png" alt="Logo Intec" class="logo">
-  <h1>Bienvenido, <?php echo htmlspecialchars(trim("$nombre $apellido")); ?></h1>
-  <nav class="contenedor-menu">
-    <h2>Menú</h2>
-    <a href="../ti/dashboard.php">Inicio</a>
-    <a href="../../../logout.php?logout=1">Cerrar Sesión</a>
+  <h1 class="header__welcome">Bienvenido, <?php echo htmlspecialchars(trim("$nombre $apellido")); ?></h1>
+  <div class="header__brand">
+    <img src="../../../src/img/intec.png" alt="Logo Intec" class="logo">
+  </div>
+  <br>
+  <nav class="header__menu" aria-label="Menú principal">
+    <h2 class="sr-only">Menú</h2>
+    <a class="btn btn--ghost" href="../bienestar/dashboard.php">Inicio</a>
+    <a class="btn btn--danger" href="<?= htmlspecialchars(appBasePath(), ENT_QUOTES, 'UTF-8') ?>/logout.php?logout=1">Cerrar Sesión</a>
   </nav>
 </header>
+
+<!-- Modal genérico -->
+<div id="modal" class="modal-overlay" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div class="modal__title" id="modal-title">Aviso</div>
+    <div class="modal__body" id="modal-body"></div>
+    <div class="modal__actions">
+      <button type="button" id="modal-ok" class="modal__btn">Aceptar</button>
+    </div>
+  </div>
+</div>
 
 <main class="main-control">
   <div class="container">
@@ -83,14 +99,14 @@ $tipo_usuario = $_SESSION['tipo']     ?? 'Desconocido';
 
   // Endpoints para cada acción
   const ENDPOINTS = {
-    ingreso:         '../ti/registrar_ingreso.php',
-    salidaAlmuerzo:  '../ti/registrar_salida_almuerzo.php',
-    regresoAlmuerzo: '../ti/registrar_regreso_almuerzo.php',
-    salidaLaboral:   '../ti/registrar_salida_laboral.php'
+    ingreso:         '../bienestar/registrar_ingreso.php',
+    salidaAlmuerzo:  '../bienestar/registrar_salida_almuerzo.php',
+    regresoAlmuerzo: '../bienestar/registrar_regreso_almuerzo.php',
+    salidaLaboral:   '../bienestar/registrar_salida_laboral.php'
   };
 
   // ✅ Siempre redirige al dashboard TI tras cada registro exitoso
-  const REDIR = '../ti/dashboard.php';
+  const REDIR = '../bienestar/dashboard.php';
 
   function showMsg(t){ MSG.textContent = t; }
 
@@ -159,17 +175,18 @@ $tipo_usuario = $_SESSION['tipo']     ?? 'Desconocido';
       });
 
       const payload = await res.text(); // por compatibilidad si el backend devuelve texto plano
+      // Modal en lugar de alert() y auto-aceptar
+      const messageOnly = (payload || '').replace(/<script[\s\S]*?<\/script>/gi,'').trim();
       if (!res.ok) {
-        alert('❌ Error del servidor (' + res.status + '): ' + payload);
+        openModal('❗ Error del servidor (' + res.status + '): ' + messageOnly);
         showMsg('Ocurrió un error al registrar. Intenta nuevamente.');
         return;
       }
-
-      alert(payload || '✅ Registro realizado correctamente.');
-      setTimeout(()=>{ window.location.href = REDIR; }, 1000);
+      openModal(messageOnly || '✅ Registro realizado correctamente.', REDIR);
+      return;
     } catch(e){
       showMsg(e.message);
-      alert('❌ ' + e.message);
+      openModal('❌ ' + e.message);
     }
   }
 
@@ -195,8 +212,7 @@ $tipo_usuario = $_SESSION['tipo']     ?? 'Desconocido';
   let tiempoLimite = 900000; // 15 minutos
   let temporizador = setTimeout(cerrarSesionPorInactividad, tiempoLimite);
   function cerrarSesionPorInactividad() {
-    alert("⏳ Tu sesión ha expirado por inactividad.");
-    window.location.href = "../../../logout.php?logout=1";
+    window.location.href = "<?= htmlspecialchars(appBasePath(), ENT_QUOTES, 'UTF-8') ?>/logout.php?logout=1";
   }
   function reiniciarTemporizador() {
     clearTimeout(temporizador);
@@ -205,6 +221,40 @@ $tipo_usuario = $_SESSION['tipo']     ?? 'Desconocido';
   ['mousemove','keydown','click','scroll','touchstart'].forEach(evt=>{
     document.addEventListener(evt, reiniciarTemporizador, {passive:true});
   });
+
+  // ---- Modal helpers ----
+  const MODAL = document.getElementById('modal');
+  const MODAL_BODY = document.getElementById('modal-body');
+  const MODAL_OK = document.getElementById('modal-ok');
+  let modalRedirect = null;
+  function openModal(text, redirect=null, autoAcceptMs=null){
+    const content = String(text ?? '').trim();
+    if (!content) {
+      if (redirect) {
+        if (typeof autoAcceptMs === 'number' && autoAcceptMs > 0) {
+          setTimeout(()=>{ window.location.href = redirect; }, autoAcceptMs);
+        } else {
+          window.location.href = redirect;
+        }
+      }
+      return;
+    }
+    modalRedirect = redirect;
+    MODAL_BODY.textContent = content;
+    MODAL.removeAttribute('hidden');
+    MODAL_OK.focus();
+    if (typeof autoAcceptMs === 'number' && autoAcceptMs > 0) {
+      setTimeout(()=>{ if(!MODAL.hasAttribute('hidden')) closeModal(); }, autoAcceptMs);
+    }
+  }
+  function closeModal(){
+    MODAL.setAttribute('hidden','');
+    const r = modalRedirect; modalRedirect = null;
+    if (r) window.location.href = r;
+  }
+  MODAL_OK.addEventListener('click', closeModal);
+  MODAL.addEventListener('click', (e)=>{ if(e.target === MODAL) closeModal(); });
+  document.addEventListener('keydown', (e)=>{ if(e.key==='Escape' && !MODAL.hasAttribute('hidden')) closeModal(); });
 })();
 </script>
 

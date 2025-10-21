@@ -1,5 +1,6 @@
 <?php
 declare(strict_types=1);
+require_once __DIR__.'/core/conexion.php';
 
 // Inicia la sesión sólo si no está activa
 if (session_status() !== PHP_SESSION_ACTIVE) {
@@ -47,10 +48,7 @@ header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
 header('Pragma: no-cache');
 header('Expires: 0');
 
-// Redirige al login (usa ruta ABSOLUTA para evitar problemas de '../..')
-$REDIRECT_PATH = '../../../index.php';
-// Si tu “router” es el index del root, usa:
-// $REDIRECT_PATH = '/index.php?logout=1';
-
+// Redirige al login (ruta basada en .env)
+$REDIRECT_PATH = appBasePath() . '/index.php';
 header('Location: ' . $REDIRECT_PATH);
 exit;

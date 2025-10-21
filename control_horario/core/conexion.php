@@ -37,6 +37,34 @@ function loadDotEnv(string $path = __DIR__.'/.env'): array {
 }
 
 /**
+ * Devuelve el path base público de la app (p.ej. "/Control_Asistencia/control_horario").
+ * Lee APP_BASE_PATH/app_base_path o BASE_PATH/base_path del entorno o core/.env
+ */
+function appBasePath(): string {
+    static $cached = null;
+    if ($cached !== null) return $cached;
+    $fileEnv = loadDotEnv(__DIR__.'/.env');
+
+    // Intenta múltiples claves
+    $candidates = [
+        getEnvVar('APP_BASE_PATH', $fileEnv, 'app_base_path'),
+        getEnvVar('BASE_PATH', $fileEnv, 'base_path'),
+    ];
+    $val = null;
+    foreach ($candidates as $c) {
+        if (is_string($c) && $c !== '') { $val = $c; break; }
+    }
+    if ($val === null) {
+        $val = '/Control_Asistencia/control_horario';
+    }
+    $val = trim($val);
+    if ($val === '') $val = '/';
+    if ($val[0] !== '/') $val = '/' . $val; // siempre empieza con '/'
+    if (strlen($val) > 1) $val = rtrim($val, '/'); // sin '/' final salvo raíz
+    return $cached = $val;
+}
+
+/**
  * Conexión PDO a **MySQL** (acorde a tu DDL).
  * Variables esperadas: DB_HOST, DB_NAME, DB_USER, DB_PASSWORD, DB_PORT (opcional, por defecto 3306)
  */
@@ -49,7 +77,7 @@ function conexion(): PDO {
     $db   = getEnvVar('DB_NAME', $fileEnv, 'db_name');
     $user = getEnvVar('DB_USER', $fileEnv, 'db_user');
     $pass = getEnvVar('DB_PASSWORD', $fileEnv, 'db_password');
-    $port = getEnvVar('DB_PORT', $fileEnv, 'db_port') ?: '3306';
+    $port = getEnvVar('DB_PORT', $fileEnv, 'db_port');
 
     if (!$host || !$db || !$user) {
         // No exponer credenciales ni paths exactos en producción

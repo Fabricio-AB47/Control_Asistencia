@@ -102,7 +102,7 @@ function fmt(?string $t): string {
 }
 function linkMap(?string $lat, ?string $lon, ?string $label = 'Mapa'): string {
     if (!$lat || !$lon || $lat === '0.000000' || $lon === '0.000000') return '';
-    $u = 'https://maps.google.com/?q=' . urlencode($lat . ',' . $lon);
+    $u = 'https://www.google.com/maps/search/?api=1&query=' . rawurlencode($lat . ',' . $lon);
     return ' <a target=\"_blank\" href=\"'.htmlspecialchars($u, ENT_QUOTES, 'UTF-8').'\">['.htmlspecialchars($label, ENT_QUOTES, 'UTF-8').']</a>';
 }
 function secs(?DateTime $a, ?DateTime $b): int {
@@ -133,6 +133,7 @@ $apellido = $_SESSION['apellido'] ?? '';
 <title>Reporte de Timbrado</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="stylesheet" href="../../../build/css/app.css">
+<script src="../../../build/js/menu.js" defer></script>
 <link rel="stylesheet" href="../../../build/css/reporte.css"><!-- generado a partir de src/scss/pages/reporte.scss -->
 </head>
 <body>
@@ -146,7 +147,7 @@ $apellido = $_SESSION['apellido'] ?? '';
   <nav class="header__menu" aria-label="Menú principal">
     <h2 class="sr-only">Menú</h2>
     <a class="btn btn--ghost" href="../ti/dashboard.php">Inicio</a>
-    <a class="btn btn--danger" href="../../../logout.php">Cerrar Sesión</a>
+    <a class="btn btn--danger" href="<?= htmlspecialchars(appBasePath(), ENT_QUOTES, 'UTF-8') ?>/logout.php">Cerrar Sesión</a>
   </nav>
 </header>
 

@@ -1385,6 +1385,145 @@ main.main-control .buttons button {
     font-size: 0.95rem;
   }
 }
+.header {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+.contenedor-menu, .header__menu {
+  --menu-bg: #ffffff;
+  --menu-fg: #111827;
+  --menu-accent: #600000;
+  --menu-border: #e5e7eb;
+  --menu-shadow: 0 10px 24px rgba(0,0,0,.15);
+  position: relative;
+  z-index: 10;
+  box-sizing: border-box;
+  display: inline-block;
+  background: transparent;
+  width: auto;
+  min-width: 0;
+}
+.contenedor-menu h2, .header__menu h2 {
+  display: none;
+}
+.contenedor-menu .menu__btn, .header__menu .menu__btn {
+  display: inline-block;
+  color: #ffffff;
+  background: var(--menu-accent);
+  padding: 0.5rem 0.8rem;
+  border-radius: 10px;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  box-shadow: var(--menu-shadow);
+  text-align: center;
+  font-weight: 600;
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+}
+.contenedor-menu a, .header__menu a {
+  display: none;
+  color: var(--menu-fg);
+  text-decoration: none;
+  background: var(--menu-bg);
+  padding: 0.55rem 0.85rem;
+  border-radius: 8px;
+  border: 1px solid var(--menu-border);
+  transition: background 0.15s ease, color 0.15s ease;
+  min-width: 220px;
+  white-space: nowrap;
+}
+.contenedor-menu a:hover, .contenedor-menu a:focus-visible, .header__menu a:hover, .header__menu a:focus-visible {
+  background: rgba(96, 0, 0, 0.06);
+  color: var(--menu-accent);
+  outline: none;
+}
+.contenedor-menu.is-open, .contenedor-menu:focus-within, .header__menu.is-open, .header__menu:focus-within {
+  background: var(--menu-bg);
+  border: 1px solid var(--menu-border);
+  border-radius: 12px;
+  padding: 0.5rem;
+  margin-top: 0.25rem;
+  box-shadow: var(--menu-shadow);
+}
+.contenedor-menu.is-open a, .contenedor-menu:focus-within a, .header__menu.is-open a, .header__menu:focus-within a {
+  display: block;
+}
+.contenedor-menu.is-open, .contenedor-menu:focus-within, .header__menu.is-open, .header__menu:focus-within {
+  max-height: calc(100vh - 48px);
+  overflow: auto;
+}
+
+@media (max-width: 768px) {
+  .contenedor-menu a, .header__menu a {
+    width: 100%;
+  }
+}
+.with-sidebar, .main-control {
+  margin-left: 0 !important;
+}
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: grid;
+  place-items: center;
+  z-index: 1200;
+}
+
+.modal-overlay[hidden] {
+  display: none !important;
+}
+
+.modal {
+  background: #fff;
+  width: min(520px, 92vw);
+  border-radius: 14px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
+  border: 1px solid #e5e7eb;
+  overflow: hidden;
+}
+
+.modal__title {
+  font-weight: 700;
+  padding: 14px 18px;
+  background: #600000;
+  color: #fff;
+}
+
+.modal__body {
+  padding: 18px;
+  color: #111827;
+  line-height: 1.45;
+  max-height: 50vh;
+  overflow: auto;
+}
+
+.modal__actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  padding: 12px 18px 16px;
+  background: #fafafa;
+  border-top: 1px solid #eef0f2;
+}
+
+.modal__btn {
+  background: #600000;
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 10px 16px;
+  cursor: pointer;
+}
+
+.modal__btn.secondary {
+  background: #374151;
+}
+
 /* Estilos para el contenedor del login */
 .login-main {
   display: flex;

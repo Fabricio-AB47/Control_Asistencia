@@ -12,6 +12,14 @@ date_default_timezone_set('America/Guayaquil');
 
 $db = conexion(); // PDO
 $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+header('Content-Type: text/plain; charset=UTF-8');
+
+// CSRF: validar token de la sesión vs cabecera/cuerpo
+$csrfToken = $_SERVER['HTTP_X_CSRF_TOKEN'] ?? ($_POST['csrf_token'] ?? '');
+if (empty($_SESSION['token']) || !is_string($csrfToken) || !hash_equals($_SESSION['token'], $csrfToken)) {
+    http_response_code(403);
+    exit('CSRF inválido');
+}
 
 $uid   = (int)$_SESSION['id_usuario'];
 $hoy   = (new DateTime('now', new DateTimeZone('America/Guayaquil')))->format('Y-m-d');
@@ -32,7 +40,6 @@ $direccion = $payload['direccion'] ?? null;
 if ($latitud === null || $longitud === null || !$direccion) {
     http_response_code(400);
     echo "❌ Debes activar y compartir tu ubicación para registrar la salida al almuerzo.";
-    echo "<script>setTimeout(function(){location.href='../bienestar/dashboard.php';},2000);</script>";
     exit();
 }
 
@@ -42,7 +49,6 @@ $lonF = (float)$longitud;
 if ($latF < -90 || $latF > 90 || $lonF < -180 || $lonF > 180) {
     http_response_code(422);
     echo "❌ Coordenadas inválidas.";
-    echo "<script>setTimeout(function(){location.href='../bienestar/dashboard.php';},2000);</script>";
     exit();
 }
 $latitud  = number_format($latF, 6, '.', '');
@@ -64,7 +70,6 @@ try {
     if (!$idFecha) {
         $db->rollBack();
         echo "ℹ️ No existe una fecha de registro para hoy. No se registró la salida al almuerzo.";
-        echo "<script>setTimeout(function(){location.href='../bienestar/dashboard.php';},2000);</script>";
         exit();
     }
     $idFecha = (int)$idFecha;
@@ -81,7 +86,6 @@ try {
     if ($idHoraIngreso <= 0) {
         $db->rollBack();
         echo "ℹ️ No puedes registrar salida al almuerzo sin haber registrado el ingreso.";
-        echo "<script>setTimeout(function(){location.href='../bienestar/dashboard.php';},1500);</script>";
         exit();
     }
 
@@ -96,7 +100,6 @@ try {
     if ($q->fetch()) {
         $db->rollBack();
         echo "ℹ️ Ya se registró la salida al almuerzo para hoy.";
-        echo "<script>setTimeout(function(){location.href='../bienestar/dashboard.php';},1500);</script>";
         exit();
     }
 
@@ -134,11 +137,9 @@ try {
     $db->commit();
 
     echo "✅ Salida al almuerzo registrada a las " . htmlspecialchars($ahora, ENT_QUOTES, 'UTF-8') . ".";
-    echo "<script>setTimeout(function(){location.href='../bienestar/dashboard.php';},1500);</script>";
 
 } catch (Throwable $e) {
     if ($db->inTransaction()) $db->rollBack();
     http_response_code(500);
     echo "❌ Error: " . $e->getMessage();
-    echo "<script>setTimeout(function(){location.href='../bienestar/dashboard.php';},2000);</script>";
 }
