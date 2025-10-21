@@ -394,19 +394,21 @@ template {
   justify-content: flex-end;
 }
 
+/* src/scss/base/_mixins.scss */
+/** Media Queries **/
+/* --- Mixins genéricos compatibles con otros parciales --- */
+/* Mobile-first: min-width */
+/* Hasta antes de un breakpoint */
+/* Entre dos breakpoints (incluye min y excluye max) */
+/* Helper rápido para un mismo prop en diferentes tamaños */
+/* Tipografía fluida */
+/* Botón utilitario (respetando tus variables) */
+/* Grid utilitario */
 .main-control {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  width: 80%;
-  max-width: 400px;
-  height: auto;
-  margin: 2rem auto;
-  padding: 2rem;
-  background-color: #f4f4f4;
-  border: 2px solid #ddd;
-  border-radius: 10px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  /* Layout mobile-first: deja que internas/_contenedor.scss gobierne el layout */
+  display: block;
+  width: 100%;
+  margin: 0 auto;
 }
 .main-control .container {
   text-align: center;
@@ -415,43 +417,56 @@ template {
   width: 100%;
 }
 .main-control h3 {
-  font-size: 2rem;
   margin-bottom: 1rem;
+  font-size: clamp(1.6rem, 1.6rem + (2rem - 1.6rem) * (100vw - 360px) / (1280px - 360px), 2rem);
 }
 .main-control p {
-  font-size: 1.4rem;
-  margin-bottom: 2rem;
+  margin-bottom: 1.25rem;
+  font-size: clamp(1.1rem, 1.1rem + (1.4rem - 1.1rem) * (100vw - 360px) / (1280px - 360px), 1.4rem);
 }
 .main-control .buttons {
   display: flex;
-  flex-direction: column;
+  flex-direction: column; /* móvil */
   gap: 1rem;
   align-items: center;
-  margin-top: 2rem;
-  padding: 2rem;
-  background-color: #f4f4f4;
-  border: 2px solid #ddd;
-  border-radius: 10px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  margin-top: 1.25rem;
+  /* Variantes de color (se mantienen) */
+}
+@media (min-width: 768px) {
+  .main-control .buttons {
+    flex-direction: row; /* tablet+ */
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 1.2rem 1.6rem;
+  }
 }
 .main-control .buttons form {
-  display: inline-block;
+  display: inline-flex;
+  margin: 0;
 }
 .main-control .buttons button {
-  padding: 1rem 4rem;
-  font-size: 1.2rem;
+  padding: 0.9rem 2.2rem;
+  font-size: 1rem;
   font-weight: bold;
   border: none;
-  border-radius: 5px;
+  border-radius: 8px;
   cursor: pointer;
-  transition: background-color 0.3s ease, transform 0.2s ease;
-  width: auto;
+  transition: background-color 0.25s ease, transform 0.1s ease;
+  width: 100%;
+  max-width: 320px; /* móvil: botones al ancho */
+}
+@media (min-width: 768px) {
+  .main-control .buttons button {
+    width: auto;
+    max-width: none;
+    min-width: 220px;
+  }
 }
 .main-control .buttons button:hover {
-  transform: scale(1.05);
+  transform: translateY(-1px);
 }
 .main-control .buttons button:active {
-  transform: scale(0.95);
+  transform: translateY(0);
 }
 .main-control .buttons .btn-ingreso {
   background-color: #4caf50;
@@ -482,16 +497,6 @@ template {
   background-color: #d32f2f;
 }
 
-/* src/scss/base/_mixins.scss */
-/** Media Queries **/
-/* --- Mixins genéricos compatibles con otros parciales --- */
-/* Mobile-first: min-width */
-/* Hasta antes de un breakpoint */
-/* Entre dos breakpoints (incluye min y excluye max) */
-/* Helper rápido para un mismo prop en diferentes tamaños */
-/* Tipografía fluida */
-/* Botón utilitario (respetando tus variables) */
-/* Grid utilitario */
 /* ===== Header ===== */
 .header {
   background-color: #C7C6C6;
@@ -1185,13 +1190,11 @@ main.main-control .buttons button {
   display: flex;
   gap: 0.5rem;
   flex-wrap: wrap;
-  /* En móviles: apilar y centrar */
+  justify-content: center;
+  width: 100%;
+  /* En móviles: ocupar ancho completo de los botones */
 }
 @media (max-width: 767.98px) {
-  .header__menu {
-    width: 100%;
-    justify-content: center;
-  }
   .header__menu .btn, .header__menu .btn--primary {
     width: 100%;
     max-width: 320px;
@@ -1388,7 +1391,7 @@ main.main-control .buttons button {
 .header {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
+  align-items: center;
   gap: 0.5rem;
 }
 
@@ -1401,9 +1404,12 @@ main.main-control .buttons button {
   position: relative;
   z-index: 10;
   box-sizing: border-box;
-  display: inline-block;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
   background: transparent;
-  width: auto;
+  width: 100%;
   min-width: 0;
 }
 .contenedor-menu h2, .header__menu h2 {

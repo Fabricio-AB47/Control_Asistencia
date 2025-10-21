@@ -103,7 +103,11 @@ function fmt(?string $t): string {
 function linkMap(?string $lat, ?string $lon, ?string $label = 'Mapa'): string {
     if (!$lat || !$lon || $lat === '0.000000' || $lon === '0.000000') return '';
     $u = 'https://www.google.com/maps/search/?api=1&query=' . rawurlencode($lat . ',' . $lon);
-    return ' <a target=\"_blank\" href=\"'.htmlspecialchars($u, ENT_QUOTES, 'UTF-8').'\">['.htmlspecialchars($label, ENT_QUOTES, 'UTF-8').']</a>';
+    $uEsc = htmlspecialchars($u, ENT_QUOTES, 'UTF-8');
+    $latEsc = htmlspecialchars($lat, ENT_QUOTES, 'UTF-8');
+    $lonEsc = htmlspecialchars($lon, ENT_QUOTES, 'UTF-8');
+    $labEsc = htmlspecialchars($label ?? 'Mapa', ENT_QUOTES, 'UTF-8');
+    return ' <a class="js-map" target="_blank" href="'.$uEsc.'" data-url="'.$uEsc.'" data-lat="'.$latEsc.'" data-lon="'.$lonEsc.'">['.$labEsc.']</a>';
 }
 function secs(?DateTime $a, ?DateTime $b): int {
     if (!$a || !$b) return 0;
@@ -150,6 +154,19 @@ $apellido = $_SESSION['apellido'] ?? '';
     <a class="btn btn--danger" href="<?= htmlspecialchars(appBasePath(), ENT_QUOTES, 'UTF-8') ?>/logout.php">Cerrar Sesión</a>
   </nav>
 </header>
+
+<!-- Modal para mapa -->
+<div id="modal" class="modal-overlay" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div class="modal__title" id="modal-title">Ubicación</div>
+    <div class="modal__body" id="modal-body">
+      <iframe id="map-frame" title="Mapa" style="width:100%;height:min(60vh,480px);border:0;border-radius:8px" loading="lazy" referrerpolicy="no-referrer-when-downgrade" src="about:blank"></iframe>
+    </div>
+    <div class="modal__actions">
+      <button type="button" id="modal-ok" class="modal__btn">Aceptar</button>
+    </div>
+  </div>
+  </div>
 
 <main class="report">
   <h1 class="report__title">Reporte de Timbrado</h1>
@@ -268,6 +285,39 @@ $apellido = $_SESSION['apellido'] ?? '';
     * Salida anticipada se calcula contra la hora de salida programada.
   </p>
 </main>
+
+<script>
+(function(){
+  const MODAL = document.getElementById('modal');
+  const MODAL_OK = document.getElementById('modal-ok');
+  const MODAL_TITLE = document.getElementById('modal-title');
+  const FRAME = document.getElementById('map-frame');
+  function openMap(lat, lon){
+    if(!lat || !lon) return;
+    const url = 'https://www.google.com/maps?q=' + encodeURIComponent(lat + ',' + lon) + '&z=17&output=embed';
+    FRAME.src = url;
+    MODAL_TITLE.textContent = 'Ubicación (' + lat + ', ' + lon + ')';
+    MODAL.removeAttribute('hidden');
+    MODAL_OK.focus();
+  }
+  function closeModal(){
+    MODAL.setAttribute('hidden','');
+    FRAME.src = 'about:blank';
+  }
+  MODAL_OK.addEventListener('click', closeModal);
+  MODAL.addEventListener('click', (e)=>{ if(e.target===MODAL) closeModal(); });
+  document.addEventListener('keydown', (e)=>{ if(e.key==='Escape' && !MODAL.hasAttribute('hidden')) closeModal(); });
+  document.addEventListener('click', function(e){
+    const a = e.target.closest('a.js-map');
+    if(!a) return;
+    if (e.ctrlKey || e.metaKey || a.target === '_blank') return; // permitir nueva pestaña con Ctrl/Cmd
+    e.preventDefault();
+    const lat = a.getAttribute('data-lat');
+    const lon = a.getAttribute('data-lon');
+    openMap(lat, lon);
+  }, {passive:false});
+})();
+</script>
 
 </body>
 </html>
