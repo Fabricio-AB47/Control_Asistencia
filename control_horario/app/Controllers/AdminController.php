@@ -328,6 +328,21 @@ class AdminController extends BaseController
             if ($ingreso !== '') {
                 $q = $db->prepare('UPDATE horario_ingreso SET hora_ingreso=? WHERE id_usuario=? AND id_fecha_registro=?');
                 $q->execute([$ingreso, $uid, $idFecha]);
+                // Recalcular estado_ingreso con tolerancia de 10 minutos sobre hora_ingreso_personal
+                $hp = $db->prepare('SELECT hora_ingreso_personal FROM horario_entrada_personal WHERE id_usuario=? LIMIT 1');
+                $hp->execute([$uid]);
+                $progIn = $hp->fetchColumn();
+                if ($progIn) {
+                    $dtProg = new \DateTime($fecha.' '.$progIn);
+                    $dtIn   = new \DateTime($fecha.' '.$ingreso);
+                    $tolEnd = (clone $dtProg)->modify('+10 minutes');
+                    if ($dtIn < $dtProg)      { $det = 'Ingreso antes de su hora de ingreso'; }
+                    elseif ($dtIn <= $tolEnd) { $det = 'Ingreso a tiempo'; }
+                    else                      { $det = 'Atraso'; }
+                    $idEstado = $this->ensureCatalog($db, 'estado_ingreso', 'id_estado_ingreso', 'detalle_ingreso', $det);
+                    $q = $db->prepare('UPDATE horario_ingreso SET id_estado_ingreso=? WHERE id_usuario=? AND id_fecha_registro=?');
+                    $q->execute([$idEstado, $uid, $idFecha]);
+                }
             }
             if ($sl !== '') {
                 $q = $db->prepare('UPDATE horario_sl_almuerzo SET hora_sl_almuerzo=? WHERE id_usuario=? AND id_fecha_registro=?');
@@ -340,12 +355,38 @@ class AdminController extends BaseController
             if ($salida !== '') {
                 $q = $db->prepare('UPDATE horario_salida SET hora_salida=? WHERE id_usuario=? AND id_fecha_registro=?');
                 $q->execute([$salida, $uid, $idFecha]);
+                // Recalcular estado_salida (Fin de jornada / Salida anticipada) contra hora_salida_personal
+                $hp = $db->prepare('SELECT hora_salida_personal FROM horario_salida_personal WHERE id_usuario=? LIMIT 1');
+                $hp->execute([$uid]);
+                $progOut = $hp->fetchColumn();
+                if ($progOut) {
+                    $dtProg = new \DateTime($fecha.' '.$progOut);
+                    $dtOut  = new \DateTime($fecha.' '.$salida);
+                    $det = ($dtOut >= $dtProg) ? 'Fin de jornada laboral' : 'Salida anticipada';
+                    $idEstado = $this->ensureCatalog($db, 'estado_salida', 'id_estado_salida', 'detalle_salida', $det);
+                    $q = $db->prepare('UPDATE horario_salida SET id_estado_salida=? WHERE id_usuario=? AND id_fecha_registro=?');
+                    $q->execute([$idEstado, $uid, $idFecha]);
+                }
             }
             $this->redirectEditTimbres('Timbres actualizados.');
         } catch (\Throwable $e) {
             error_log('admin timbres save: '.$e->getMessage());
             $this->redirectEditTimbres('Error al actualizar timbres.', true);
         }
+    }
+
+    // Asegura la existencia de un catálogo y devuelve su id
+    private function ensureCatalog(\PDO $db, string $table, string $pk, string $col, string $detalle): int
+    {
+        $q = $db->prepare("SELECT $pk FROM $table WHERE $col=? LIMIT 1");
+        $q->execute([$detalle]);
+        $id = (int)($q->fetchColumn() ?: 0);
+        if (!$id) {
+            $i = $db->prepare("INSERT INTO $table ($col) VALUES (?)");
+            $i->execute([$detalle]);
+            $id = (int)$db->lastInsertId();
+        }
+        return $id;
     }
 
     private function redirectEditTimbres(string $message, bool $isError=false): void
