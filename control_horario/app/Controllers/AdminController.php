@@ -121,6 +121,8 @@ class AdminController extends BaseController
         if ($correo==='' || $nombre==='' || $segundoNombre==='' || $apellido==='' || $segundoApellido==='' || $cedula==='' || $pwd==='' || $rolId<=0) {
             $this->redirectUsers('Todos los campos son obligatorios.', true); return;
         }
+        // Validación de correo
+        if (!filter_var($correo, FILTER_VALIDATE_EMAIL)) { $this->redirectUsers('Correo inválido.', true); return; }
         try {
             $db = \conexion();
             $s = $db->prepare('SELECT 1 FROM usuario WHERE correo=? LIMIT 1');
@@ -184,6 +186,9 @@ class AdminController extends BaseController
         $horaIn = trim((string)($_POST['hora_ingreso'] ?? ''));
         $horaOut= trim((string)($_POST['hora_salida'] ?? ''));
         if ($uid<=0 || $horaIn==='' || $horaOut==='') { $this->redirectSchedules('Todos los campos son obligatorios.', true); return; }
+        // Validación de formato HH:MM:SS
+        $validTime = function(string $h){ $d=\DateTime::createFromFormat('H:i:s',$h); return $d && $d->format('H:i:s')===$h; };
+        if (!$validTime($horaIn) || !$validTime($horaOut)) { $this->redirectSchedules('Formato de hora inválido (HH:MM:SS).', true); return; }
         try {
             $db = \conexion();
             // obtener rol del usuario para guardar id_tp_user en tablas de horario
@@ -309,6 +314,8 @@ class AdminController extends BaseController
         $rt      = trim((string)($_POST['hora_rt'] ?? ''));
         $salida  = trim((string)($_POST['hora_salida'] ?? ''));
         if ($uid<=0 || !$fecha) { $this->redirectEditTimbres('Usuario y fecha son obligatorios.', true); return; }
+        $validTime = function(string $h){ if($h==='') return true; $d=\DateTime::createFromFormat('H:i:s',$h); return $d && $d->format('H:i:s')===$h; };
+        if (!$validTime($ingreso) || !$validTime($sl) || !$validTime($rt) || !$validTime($salida)) { $this->redirectEditTimbres('Formato de hora inválido (HH:MM:SS).', true); return; }
         try {
             $db = \conexion();
             // Buscar id_fecha_registro

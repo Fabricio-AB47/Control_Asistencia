@@ -3,6 +3,7 @@ declare(strict_types=1);
 session_start();
 
 require __DIR__ . '/../app/init.php';
+app_boot_session();
 
 use App\Controllers\ControlController;
 use App\Controllers\ReporteController;

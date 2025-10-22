@@ -19,6 +19,21 @@ spl_autoload_register(function ($class) {
 // Cargar helpers de Core (funciones globales appBasePath, conexion, etc.)
 require_once __DIR__ . '/Controllers/Core.php';
 
+// ---- Seguridad HTTP global (cabeceras de protección básicas) ----
+if (!headers_sent()) {
+    header('X-Content-Type-Options: nosniff');
+    header('Referrer-Policy: strict-origin-when-cross-origin');
+    // Evita cacheo en páginas autenticadas de manera general
+    header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+    header('Pragma: no-cache');
+    header('Expires: 0');
+    // CSP permisiva pero segura para el proyecto actual
+    // Permitimos 'unsafe-inline' en script temporalmente porque existen scripts inline en vistas.
+    // Recomendado: migrarlos a archivos .js y retirar 'unsafe-inline'.
+    $csp = "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https://nominatim.openstreetmap.org; frame-src https://www.google.com; frame-ancestors 'none'";
+    header("Content-Security-Policy: $csp");
+}
+
 // Lightweight helpers
 if (!function_exists('app_json_input')) {
     function app_json_input(): array {
@@ -62,5 +77,39 @@ if (!function_exists('app_session_guard')) {
             exit();
         }
         $_SESSION['ultimo_acceso'] = $now;
+    }
+}
+
+// ---- Sesión endurecida y helper para arrancarla con parámetros seguros ----
+if (!function_exists('app_boot_session')) {
+    function app_boot_session(): void {
+        // Parámetros de cookie de sesión
+        $secure = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off');
+        $params = [
+            'lifetime' => 0,
+            'path'     => '/',
+            'domain'   => '',
+            'secure'   => $secure,
+            'httponly' => true,
+            'samesite' => 'Lax',
+        ];
+        if (session_status() !== PHP_SESSION_ACTIVE) {
+            if (PHP_VERSION_ID >= 70300) session_set_cookie_params($params);
+            ini_set('session.use_strict_mode', '1');
+            session_start();
+        }
+    }
+}
+
+// ---- Rate limiting simple por sesión ----
+if (!function_exists('app_rate_limit')) {
+    function app_rate_limit(string $key, int $limit, int $windowSec): bool {
+        if (!isset($_SESSION)) return true; // si no hay sesión, permitir (o arrancarla antes)
+        $now = time();
+        $_SESSION['rate'] = $_SESSION['rate'] ?? [];
+        $_SESSION['rate'][$key] = array_filter($_SESSION['rate'][$key] ?? [], function($ts) use($now,$windowSec){ return ($now - $ts) < $windowSec; });
+        if (count($_SESSION['rate'][$key]) >= $limit) return false;
+        $_SESSION['rate'][$key][] = $now;
+        return true;
     }
 }
