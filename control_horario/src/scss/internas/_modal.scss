@@ -1,7 +1,10 @@
+@use '../base/variables' as v;
+@use '../base/mixins' as m;
+
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,.45);
+  background: rgba(0,0,0,.5);
   display: grid;
   place-items: center;
   z-index: 1200;
@@ -13,26 +16,35 @@
 }
 
 .modal {
-  background: #fff;
-  width: min(520px, 92vw);
+  background: v.$blanco;
+  width: min(92vw, 640px);
   border-radius: 14px;
   box-shadow: 0 20px 40px rgba(0,0,0,.25);
   border: 1px solid #e5e7eb;
   overflow: hidden;
+
+  @include m.tablet { width: min(88vw, 880px); }
+  @include m.desktop { width: min(80vw, 1100px); }
 }
 .modal__title {
   font-weight: 700;
   padding: 14px 18px;
-  background: #600000;
-  color: #fff;
+  background: v.$rojo;
+  color: v.$blanco;
 }
 .modal__body {
   padding: 18px;
   color: #111827;
   line-height: 1.45;
-  max-height: 50vh;
+  max-height: 60vh;
   overflow: auto;
+
+  @include m.tablet { max-height: 70vh; }
 }
+.modal--wide { width: min(1200px, 96vw); }
+.modal--wide .modal__body { max-height: 78vh; }
+.modal--xl   { width: min(1400px, 98vw); }
+.modal--xl .modal__body { max-height: 82vh; }
 .modal__actions {
   display: flex;
   gap: 10px;
@@ -42,8 +54,8 @@
   border-top: 1px solid #eef0f2;
 }
 .modal__btn {
-  background: #600000;
-  color: #fff;
+  background: v.$rojo;
+  color: v.$blanco;
   border: none;
   border-radius: 10px;
   padding: 10px 16px;

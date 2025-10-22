@@ -1,6 +1,6 @@
 <?php
 session_start();
-require 'core/conexion.php';
+require __DIR__ . '/app/init.php';
 
 $error = "";
 
@@ -8,7 +8,13 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $usuario  = trim($_POST['usuario'] ?? '');
     $password = trim($_POST['password'] ?? '');
 
-    $db = conexion();
+    try {
+        $db = conexion();
+    } catch (RuntimeException $e) {
+        $error = $e->getMessage();
+        include __DIR__ . "/app/Views/auth/login.php";
+        exit();
+    }
     $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
     // ✅ Alias para mantener compatibilidad con tu código:
@@ -61,19 +67,22 @@ function loginSuccess($user) {
     $_SESSION["ultimo_acceso"]  = time();
     $_SESSION["token"]          = bin2hex(random_bytes(32));
 
-    // Redirige según rol (ahora usa id_tipo que viene del alias)
-    switch ((int)$user["id_tipo"]) {
-        case 1: header("Location: view/partials/admin/dashboard_adm.php"); break;
-        case 2: header("Location: view/partials/financiero/dashboard.php"); break;
-        case 3: header("Location: view/partials/admisiones/dashboard.php"); break;
-        case 4: header("Location: view/partials/academico/dashboard.php"); break;
-        case 5: header("Location: view/partials/bienestar/dashboard.php"); break;
-        case 6: header("Location: view/partials/ti/dashboard.php"); break;
-        default:
-            echo "Tipo de usuario desconocido.";
-            exit();
-    }
+    // Redirige según rol a MVC (router)
+    $mapIdToMod = [
+        1 => 'admin',        // ADMINISTRADOR
+        2 => 'financiero',   // FINANCIERO
+        3 => 'admisiones',   // ADMISIONES
+        4 => 'academico',    // ACADEMICO
+        5 => 'bienestar',    // BIENESTAR
+        6 => 'ti',           // TI
+        7 => 'academico',    // DOCENTES (accede a Académico)
+    ];
+    $mod = $mapIdToMod[(int)$user['id_tipo']] ?? '';
+    if ($mod === '') { echo "Tipo de usuario desconocido."; exit(); }
+    $base = function_exists('appBasePath') ? appBasePath() : '';
+    header('Location: ' . $base . '/public/index.php?r=dashboard&mod=' . $mod);
+    exit();
     exit();
 }
 
-include "view/login.php";
+include __DIR__ . "/app/Views/auth/login.php";

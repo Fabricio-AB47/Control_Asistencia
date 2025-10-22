@@ -155,6 +155,21 @@
         box-shadow: 0 0 0 3px rgba(141, 187, 199, .25);
       }
     }
+
+    /* Nuevos campos: texto y select para filtros (Nombre, Rol) */
+    input[type="text"], select {
+      padding: .55rem .75rem;
+      border: 1px solid v.$gris;
+      border-radius: .55rem;
+      background: v.$blanco;
+      outline: none;
+      @include m.fluid-type(.9rem, 1rem);
+
+      &:focus {
+        border-color: v.$celeste;
+        box-shadow: 0 0 0 3px rgba(141, 187, 199, .25);
+      }
+    }
   }
 
   /* El botón de filtrar ya usa .btn .btn--primary */

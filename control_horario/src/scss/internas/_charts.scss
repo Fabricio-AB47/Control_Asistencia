@@ -1,0 +1,33 @@
+@use '../base/mixins' as m;
+
+.chart-card {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  box-shadow: 0 10px 24px rgba(0,0,0,.08);
+  padding: .75rem 1rem;
+  margin: 0 auto;
+  width: 100%;
+  max-width: 420px; /* móvil: compacto */
+
+  @include m.tablet { max-width: 540px; padding: 1rem 1.25rem; }
+  @include m.desktop { max-width: 640px; }
+
+  canvas {
+    display: block;
+    margin: 0 auto;
+    max-width: 100%;
+    height: auto; /* Chart.js calculará altura por aspectRatio */
+  }
+}
+
+.chart-actions {
+  display: inline-grid;
+  grid-auto-flow: column;
+  gap: .5rem;
+  align-items: end;
+  margin: 0 auto .75rem;
+
+  @include m.down(tablet) { grid-auto-flow: row; justify-items: center; }
+}
+

@@ -1,6 +1,6 @@
 <?php
 declare(strict_types=1);
-require_once __DIR__.'/core/conexion.php';
+require_once __DIR__.'/app/init.php';
 
 // Inicia la sesión sólo si no está activa
 if (session_status() !== PHP_SESSION_ACTIVE) {
