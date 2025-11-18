@@ -125,6 +125,25 @@ class AdminController extends BaseController
         if (!filter_var($correo, FILTER_VALIDATE_EMAIL)) { $this->redirectUsers('Correo inválido.', true); return; }
         try {
             $db = conexion();
+
+            // Validación principal: máximo 2 roles/usuarios por persona (misma cédula + mismo correo)
+            $correoL = strtolower($correo);
+            $sPersona = $db->prepare('SELECT id_tp_user FROM usuario WHERE cedula = ? AND correo = ?');
+            $sPersona->execute([$cedula, $correoL]);
+            $rolesPersona = array_map('intval', $sPersona->fetchAll(PDO::FETCH_COLUMN) ?: []);
+
+            // No repetir exactamente el mismo rol para la misma persona
+            if (in_array($rolId, $rolesPersona, true)) {
+                $this->redirectUsers('La persona ya tiene ese rol asignado con esa cédula y correo.', true);
+                return;
+            }
+            // Bloquear cuando ya tiene 2 roles para esa cédula+correo
+            if (count($rolesPersona) >= 2) {
+                $this->redirectUsers('Máximo 2 roles distintos por persona (misma cédula y correo).', true);
+                return;
+            }
+
+            // --- Lógica previa se mantiene como respaldo ---
             // Permitir correo y cédula repetidos, pero máximo 2 roles distintos por persona y sin repetir rol
             $correoL = strtolower($correo);
             $s = $db->prepare('SELECT id_tp_user FROM usuario WHERE cedula = ?');

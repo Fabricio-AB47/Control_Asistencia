@@ -268,7 +268,7 @@ class ControlService
         }
     // ====== REGISTROS DOCENTE (sin horario programado, ventanas específicas) ======
 }
-    private function docenteSlotIndex(string $type, string $tz, string $ahora): ?int
+    private function docenteSlotIndex(string $type, string $tz, string $ahora)
 {
     $dtz = new \DateTimeZone($tz);
     $todayDt = new DateTime('now',$dtz);
@@ -313,6 +313,13 @@ class ControlService
         date_default_timezone_set($tz);
         $hoy   = date('Y-m-d');
         $ahora = date('H:i:s');
+
+        // Solo permitir si el tipo de usuario es DOCENTE (id_tp_user = 7)
+        $idTpUser = $this->getUserTipo($uid);
+        if ($idTpUser !== 7) {
+            return 'Solo usuarios con tipo DOCENTE pueden registrar ingresos de docente.';
+        }
+
         $direccion = $this->normalizeDireccion($input['direccion'] ?? null);
         [$latitud, $longitud] = $this->validateUbicacion($input['latitud'] ?? null, $input['longitud'] ?? null, $direccion);
         $this->db->beginTransaction();
@@ -337,6 +344,13 @@ class ControlService
         date_default_timezone_set($tz);
         $hoy   = date('Y-m-d');
         $ahora = date('H:i:s');
+
+        // Solo permitir si el tipo de usuario es DOCENTE (id_tp_user = 7)
+        $idTpUser = $this->getUserTipo($uid);
+        if ($idTpUser !== 7) {
+            return 'Solo usuarios con tipo DOCENTE pueden registrar fines de docente.';
+        }
+
         $direccion = $this->normalizeDireccion($input['direccion'] ?? null);
         [$latitud, $longitud] = $this->validateUbicacion($input['latitud'] ?? null, $input['longitud'] ?? null, $direccion);
         $this->db->beginTransaction();
@@ -353,9 +367,5 @@ class ControlService
             return '✅ Fin docente registrado a las ' . $ahora . '.';
         } catch (\Throwable $e) { if ($this->db->inTransaction()) $this->db->rollBack(); throw $e; }
 }
-
-
-
-
 
 }

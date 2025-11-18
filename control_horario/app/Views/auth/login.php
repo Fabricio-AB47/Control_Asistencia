@@ -8,7 +8,9 @@
 </head>
 <body>
   <header class="header">
-    <img src="src/img/intec.png" alt="Logo Intec" class="logo">
+    <div class="header__brand">
+      <img src="src/img/intec.png" alt="Logo Intec" class="logo">
+    </div>
   </header>
   <main class="login-main">
     <div class="login-container">

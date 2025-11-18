@@ -37,12 +37,12 @@
 
 .btn {
   @extend %btn-base;
-  background: v.$celeste;
+  background: v.$rojo;
   color: v.$blanco;
   box-shadow: 0 1px 2px rgba(0,0,0,.06);
 
-  &:hover  { background: color.adjust(v.$celeste, $lightness: -6%); }
-  &:active { background: color.adjust(v.$celeste, $lightness: -10%); }
+  &:hover  { background: color.adjust(v.$rojo, $lightness: -6%); }
+  &:active { background: color.adjust(v.$rojo, $lightness: -10%); }
 }
 
 .btn--primary { @extend .btn; }
@@ -61,10 +61,21 @@
   @extend %btn-base;
   background: transparent;
   color: v.$negro;
-  border: 2px solid v.$celeste;
+  border: 2px solid v.$rojo;
 
-  &:hover  { background: v.$celeste; color: v.$blanco; }
-  &:active { background: color.adjust(v.$celeste, $lightness: -8%); color: v.$blanco; }
+  &:hover  { background: v.$rojo; color: v.$blanco; }
+  &:active { background: color.adjust(v.$rojo, $lightness: -8%); color: v.$blanco; }
+}
+
+/* Botón específico para exportar a Excel (verde Excel) */
+.btn--excel {
+  @extend %btn-base;
+  background: #217346; // verde estilo Microsoft Excel
+  color: v.$blanco;
+  box-shadow: 0 1px 2px rgba(0,0,0,.08);
+
+  &:hover  { background: color.adjust(#217346, $lightness: -6%); }
+  &:active { background: color.adjust(#217346, $lightness: -10%); }
 }
 
 /* ===========================
@@ -129,15 +140,16 @@
 /* ===========================
    FILTROS
    =========================== */
-.filter {
-  display: grid;
-  gap: .75rem;
-  align-items: end;
-  margin-bottom: 1rem;
+  .filter {
+    display: grid;
+    gap: .75rem;
+    align-items: end;
+    margin-bottom: 1rem;
 
-  @include m.up(tablet) {
-    grid-template-columns: repeat(5, minmax(0, 1fr));
-  }
+    /* En pantallas medianas/grandes: 4 campos + columna de acciones */
+    @include m.up(tablet) {
+      grid-template-columns: repeat(4, minmax(0, 1fr)) auto;
+    }
 
   &__field {
     display: flex; flex-direction: column;
@@ -172,10 +184,17 @@
     }
   }
 
-  /* El botón de filtrar ya usa .btn .btn--primary */
-  &__btn {
-    @include m.up(tablet) { grid-column: span 1; }
-  }
+    /* Contenedor de acciones (Filtrar + Exportar) */
+    &__actions {
+      display: flex;
+      gap: .5rem;
+      align-items: center;
+      justify-content: flex-end;
+
+      @include m.up(tablet) {
+        grid-column: span 1;
+      }
+    }
 
   .note {
     color: v.$gris_oscuro; font-size: .9rem;
@@ -190,9 +209,10 @@
   width: 100%;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
-  border: 1px solid v.$gris;
+  border: 1px solid v.$gris_200;
   border-radius: .75rem;
-  background: v.$blanco;
+  background: v.$bg_card;
+  box-shadow: v.$shadow_soft;
 }
 
 .table {
@@ -202,17 +222,21 @@
 
   th, td {
     padding: .65rem .75rem;
-    border-bottom: 1px solid #eaeaea;
+    border-bottom: 1px solid v.$gris_200;
     vertical-align: top;
     font-size: .9rem;
-    color: v.$gris_oscuro;
+    color: v.$gris_600;
   }
 
   th {
     text-align: left;
-    background: #f6f6f6;
+    background: v.$gris_100;
     position: sticky; top: 0; z-index: 1;
     color: v.$negro; font-weight: v.$bold;
+  }
+
+  tr:nth-child(even) td {
+    background-color: rgba(148,163,184,.06);
   }
 
   tr:last-child td { border-bottom: 0; }
@@ -221,7 +245,7 @@
   &__head th:last-child  { border-top-right-radius: .75rem; }
 
   &__foot td {
-    background: #fbfbfb;
+    background: v.$gris_100;
     font-weight: v.$bold;
   }
   &__foot-label { text-align: right; }
@@ -271,8 +295,13 @@
   .table th, .table td { padding: .55rem .6rem; font-size: .85rem; }
 
   .filter {
-    grid-template-columns: 1fr 1fr;
-    &__btn { grid-column: 1 / -1; justify-self: start; }
+    grid-template-columns: 1fr;
+
+    &__actions {
+      grid-column: 1 / -1;
+      justify-content: flex-start;
+      flex-wrap: wrap;
+    }
   }
 }
 

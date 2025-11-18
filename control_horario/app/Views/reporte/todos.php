@@ -29,7 +29,13 @@ function linkMap($lat,$lon,$label='Mapa'){
         <?php endforeach; ?>
       </select>
     </label>
-    <button class="btn btn--primary filter__btn" type="submit">Filtrar</button>
+    <div class="filter__actions">
+      <button class="btn btn--primary" type="submit">🔍 Filtrar</button>
+      <a class="btn btn--excel"
+         href="?r=reporte_all&amp;desde=<?= h($desde) ?>&amp;hasta=<?= h($hasta) ?>&amp;q=<?= h($q ?? '') ?>&amp;rol=<?= h($rolSel ?? '') ?>&amp;export=excel">
+        📊 Exportar Excel
+      </a>
+    </div>
   </form>
 
   <div class="table-container">

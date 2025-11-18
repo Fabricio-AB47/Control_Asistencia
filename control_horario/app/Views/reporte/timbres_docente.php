@@ -12,14 +12,20 @@ function linkMap($lat,$lon,$label='Mapa'){
 
   <form class="filter" method="get" novalidate>
     <input type="hidden" name="r" value="reporte">
-    <input type="hidden" name="mod" value="<?= h($module ?? \"docente\") ?>">
+    <input type="hidden" name="mod" value="<?= h($module ?? 'docente') ?>">
     <label class="filter__field">Desde
       <input type="date" name="desde" value="<?= h($desde) ?>">
     </label>
     <label class="filter__field">Hasta
       <input type="date" name="hasta" value="<?= h($hasta) ?>">
     </label>
-    <button class="btn btn--primary filter__btn" type="submit">Filtrar</button>
+    <div class="filter__actions">
+      <button class="btn btn--primary" type="submit">🔍 Filtrar</button>
+      <a class="btn btn--excel"
+         href="?r=reporte&amp;mod=<?= h($module ?? 'docente') ?>&amp;desde=<?= h($desde) ?>&amp;hasta=<?= h($hasta) ?>&amp;export=excel">
+        📊 Exportar Excel
+      </a>
+    </div>
   </form>
 
   <div class="table-container">

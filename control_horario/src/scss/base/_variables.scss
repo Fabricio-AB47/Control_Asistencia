@@ -9,8 +9,6 @@ $blanco: #ffffff; /* Blanco */
 $gris: #C7C6C6; /* Gris claro */
 $gris_oscuro: #777777; /* Gris oscuro */
 
-
-
 $verde: #71B100;
 /*Fuente negro*/
 $negro: #000000;
@@ -26,4 +24,16 @@ $separacion: 5rem;
 $delgada: 300;
 $regular : 400;
 $bold: 700;
-$black: 900
+$black: 900;
+
+// Derivados para layouts y tablas (no modifican la paleta base)
+$gris_100: #f5f5f5;
+$gris_200: #e5e5e5;
+$gris_400: $gris;
+$gris_600: $gris_oscuro;
+$gris_800: #333333;
+
+$bg_body:  $gris_100;
+$bg_card:  $blanco;
+$border_soft: rgba(0,0,0,.08);
+$shadow_soft: 0 12px 25px rgba(0,0,0,.08);

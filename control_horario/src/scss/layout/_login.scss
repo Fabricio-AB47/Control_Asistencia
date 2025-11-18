@@ -1,79 +1,96 @@
- @use '../base/variables' as v;      
-       
-       /* Estilos para el contenedor del login */
-        .login-main {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding-top: 15rem;
-            background-color: v.$blanco;
-        }
-        
-        .login-container {
-            background-color: v.$gris_oscuro;
-            padding: 40px;
-            border-radius: 8px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            width: 100%;
-            max-width: 400px;
-        }
-        
-        /* Título del formulario */
-        .login-title {
-            text-align: center;
-            margin-bottom: 20px;
-            font-size: 24px;
-            color: v.$negro;
-        }
-        
-        /* Estilos para los campos del formulario */
-        .form-group {
-            margin-bottom: 20px;
-        }
-        
-        .form-label {
-            display: block;
-            font-size: 14px;
-            margin-bottom: 5px;
-            color:v.$negro;
-        }
-        
-        .form-input {
-            width: 100%;
-            padding: 10px;
-            font-size: 16px;
-            border: 1px solid v.$gris;
-            border-radius: 4px;
-            background-color: v.$gris;
-        }
-        
-        .form-input:focus {
-            border-color: v.$gris_oscuro;
-            outline: none;
-        }
-        
-        /* Estilos para el botón de login */
-        .login-btn {
-            width: 100%;
-            padding: 12px;
-            background-color: v.$gris;
-            color:v.$negro;
-            border: none;
-            border-radius: 4px;
-            font-size: 16px;
-            cursor: pointer;
-            transition: background-color 0.3s ease;
-        }
-        
-        .login-btn:hover {
-            background-color: v.$rojo;
-            color:v.$blanco;
-        }
-        
-        /* Estilos adicionales para la página */
-        @media (max-width: 480px) {
-            .login-container {
-                padding: 20px;
-                max-width: 90%;
-            }
-        }
+@use '../base/variables' as v;
+@use '../base/mixins'    as m;
+
+/* Contenedor de la página de login */
+.login-main {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 2rem 1.5rem;
+  background-color: v.$bg_body;
+}
+
+.login-container {
+  background-color: v.$bg_card;
+  padding: 2.4rem 2rem;
+  border-radius: 12px;
+  box-shadow: v.$shadow_soft;
+  width: 100%;
+  max-width: 400px;
+  border: 1px solid v.$border_soft;
+}
+
+.login-container--roles {
+  max-width: 520px;
+}
+
+/* Título del formulario */
+.login-title {
+  text-align: center;
+  margin-bottom: 1.8rem;
+  @include m.fluid-type(1.9rem, 2.4rem);
+  color: v.$negro;
+  font-weight: v.$bold;
+}
+
+/* Campos del formulario */
+.form-group {
+  margin-bottom: 1.4rem;
+}
+
+.form-label {
+  display: block;
+  font-size: .95rem;
+  margin-bottom: .35rem;
+  color: v.$gris_600;
+}
+
+.form-input {
+  width: 100%;
+  padding: .75rem .9rem;
+  font-size: 1.5rem;
+  border-radius: 8px;
+  border: 1px solid v.$gris_200;
+  background-color: v.$blanco;
+  outline: none;
+  transition: border-color .2s ease, box-shadow .2s ease, background-color .2s ease;
+
+  &:focus {
+    border-color: v.$celeste;
+    box-shadow: 0 0 0 3px rgba(14,165,233,.25);
+    background-color: #ffffff;
+  }
+}
+
+/* Botón de login */
+.login-btn {
+  width: 100%;
+  padding: .85rem 1rem;
+  background-color: v.$rojo;
+  color: v.$blanco;
+  border: none;
+  border-radius: 999px;
+  font-size: 1.6rem;
+  font-weight: v.$bold;
+  cursor: pointer;
+  transition: background-color .25s ease, transform .08s ease, box-shadow .2s ease;
+
+  &:hover {
+    background-color: #7b0f0f; /* rojo un poco más oscuro, buen contraste */
+    box-shadow: 0 8px 18px rgba(0,0,0,.25);
+    transform: translateY(-1px);
+  }
+  &:active {
+    transform: translateY(0);
+    box-shadow: 0 4px 10px rgba(37,99,235,.2);
+  }
+}
+
+/* Ajustes para pantallas pequeñas */
+@media (max-width: 480px) {
+  .login-container {
+    padding: 1.8rem 1.4rem;
+    max-width: 100%;
+  }
+}

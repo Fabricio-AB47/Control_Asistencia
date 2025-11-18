@@ -1,0 +1,68 @@
+@use '../base/variables' as v;
+@use '../base/mixins' as m;
+@use 'sass:color';
+
+.login-container--roles {
+  text-align: center;
+}
+
+.login-subtitle {
+  margin-top: .4rem;
+  margin-bottom: 1.2rem;
+  font-size: .95rem;
+  color: v.$gris_600;
+}
+
+.role-buttons {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: .8rem;
+  justify-content: center;
+  align-items: stretch;
+}
+
+.role-buttons__form {
+  margin: 0;
+  flex: 0 1 220px; /* ancho un poco mayor para botones grandes */
+}
+
+.role-buttons__btn {
+  width: 100%;
+  padding: .9rem 1.8rem;
+  border-radius: 999px;
+  border: none;
+  cursor: pointer;
+  font-weight: v.$bold;
+  font-size: 1.05rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: .4rem;
+  background-color: v.$rojo;
+  color: v.$blanco;
+  box-shadow: 0 6px 14px rgba(0,0,0,.12);
+  transition: background-color .2s ease, box-shadow .2s ease, transform .08s ease;
+
+  &:hover {
+    background-color: color.scale(v.$rojo, $lightness: -5%);
+    box-shadow: 0 8px 18px rgba(0,0,0,.16);
+    transform: translateY(-1px);
+  }
+  &:active {
+    transform: translateY(0);
+    box-shadow: 0 4px 10px rgba(0,0,0,.12);
+  }
+}
+
+.role-buttons__btn--secondary {
+  background-color: v.$rojo;
+
+  &:hover {
+    background-color: color.scale(v.$rojo, $lightness: -5%);
+  }
+}
+
+.role-buttons__icon {
+  font-size: 1.2rem;
+}

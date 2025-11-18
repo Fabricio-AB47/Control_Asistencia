@@ -23,7 +23,13 @@ function hhmmss($seconds){ if($seconds<=0)return '00:00:00'; $h=intdiv($seconds,
     <label class="filter__field">Hasta
       <input type="date" name="hasta" value="<?= h($hasta) ?>">
     </label>
-    <button class="btn btn--primary filter__btn" type="submit">Filtrar</button>
+    <div class="filter__actions">
+      <button class="btn btn--primary" type="submit">🔍 Filtrar</button>
+      <a class="btn btn--excel"
+         href="?r=reporte&amp;mod=<?= h($module) ?>&amp;desde=<?= h($desde) ?>&amp;hasta=<?= h($hasta) ?>&amp;export=excel">
+        📊 Exportar Excel
+      </a>
+    </div>
     <span class="note">
       <?= $horaProgIn ? 'Hora ingreso prog.: '.h($horaProgIn).' · ' : '' ?>
       <?= $horaProgOut ? 'Hora salida prog.: '.h($horaProgOut) : '' ?>

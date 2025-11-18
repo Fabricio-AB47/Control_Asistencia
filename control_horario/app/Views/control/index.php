@@ -10,22 +10,34 @@ $mod = $module ?? 'ti';
     <div class="buttons">
       <!-- Botón para registrar ingreso -->
       <form id="form-ingreso" method="post">
-        <button type="submit" class="btn-ingreso" id="btn-ingreso">Registrar Ingreso</button>
+        <button type="submit" class="btn-ingreso" id="btn-ingreso">
+          <span class="btn-icon">🕒</span>
+          <span>Registrar Ingreso</span>
+        </button>
       </form>
 
       <!-- Botón para registrar salida de almuerzo -->
       <form id="form-salida-almuerzo" method="post">
-        <button type="submit" class="btn-salida-almuerzo" id="btn-salida-almuerzo">Salida al Almuerzo</button>
+        <button type="submit" class="btn-salida-almuerzo" id="btn-salida-almuerzo">
+          <span class="btn-icon">🍽️</span>
+          <span>Salida al Almuerzo</span>
+        </button>
       </form>
 
       <!-- Botón para registrar regreso del almuerzo -->
       <form id="form-regreso-almuerzo" method="post">
-        <button type="submit" class="btn-regreso-almuerzo" id="btn-regreso-almuerzo">Regreso del Almuerzo</button>
+        <button type="submit" class="btn-regreso-almuerzo" id="btn-regreso-almuerzo">
+          <span class="btn-icon">↩️</span>
+          <span>Regreso del Almuerzo</span>
+        </button>
       </form>
 
       <!-- Botón para registrar salida laboral -->
       <form id="form-salida-laboral" method="post">
-        <button type="submit" class="btn-salida-laboral" id="btn-salida-laboral">Salida Laboral</button>
+        <button type="submit" class="btn-salida-laboral" id="btn-salida-laboral">
+          <span class="btn-icon">🏁</span>
+          <span>Salida Laboral</span>
+        </button>
       </form>
     </div>
 
@@ -81,7 +93,7 @@ $mod = $module ?? 'ti';
           const perm = await navigator.permissions.query({name:'geolocation'});
           if (perm.state === 'denied') return reject(new Error('Debes ACTIVAR la ubicación para continuar. Revisa los permisos del sitio en tu navegador.'));
         }
-      } catch(_){}
+      } catch(_){ }
 
       navigator.geolocation.getCurrentPosition(async (pos)=>{
         const lat = +pos.coords.latitude.toFixed(6);
@@ -103,10 +115,10 @@ $mod = $module ?? 'ti';
   }
 
   async function enviarRegistro(url, etiqueta){
-    showMsg('Solicitando ubicación…');
+    showMsg('Solicitando ubicación.');
     try {
       const {lat, lon, addr} = await pedirCoordenadas();
-      showMsg('Ubicación obtenida. Registrando…');
+      showMsg('Ubicación obtenida. Registrando.');
       const res = await fetch(url, {
         method: 'POST',
         credentials: 'same-origin',
@@ -117,14 +129,14 @@ $mod = $module ?? 'ti';
       const payload = await res.text();
       const messageOnly = (payload || '').replace(/<script[\s\S]*?<\/script>/gi,'').trim();
       if (!res.ok) {
-        openModal('❗ Error del servidor (' + res.status + '): ' + messageOnly);
+        openModal('? Error del servidor (' + res.status + '): ' + messageOnly);
         showMsg('Ocurrió un error al registrar. Intenta nuevamente.');
         return;
       }
-      openModal(messageOnly || '✅ Registro realizado correctamente.', REDIR);
+      openModal(messageOnly || '? Registro realizado correctamente.', REDIR);
     } catch(e){
       showMsg(e.message);
-      openModal('❗ ' + e.message);
+      openModal('? ' + e.message);
     }
   }
 

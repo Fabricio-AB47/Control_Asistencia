@@ -1,98 +1,60 @@
-// Menú desplegable responsive para .contenedor-menu
-@use '../base/variables' as v;
+@use "../base/variables" as v;
+@use "../base/mixins" as m;
 
-// Menú bajo el logo, colapsado como botón
-.header {
+/* Navegación simple: enlaces visibles siempre, texto negro */
+.header__menu {
   display: flex;
-  flex-direction: column;
-  align-items: center; // centrar contenido del header
-  gap: .5rem;
-}
-
-.contenedor-menu, .header__menu {
-  --menu-bg: #ffffff;
-  --menu-fg: #111827;
-  --menu-accent: #600000; // acorde al tema existente
-  --menu-border: #e5e7eb;
-  --menu-shadow: 0 10px 24px rgba(0,0,0,.15);
-
-  position: relative;
-  z-index: 10;
-  box-sizing: border-box;
-  display: flex;            // permite centrar el botón/enlaces
-  justify-content: center;  // centrado horizontal
-  align-items: center;
   flex-wrap: wrap;
-  background: transparent;
+  gap: .5rem;
+  justify-content: center;
+  align-items: center;
   width: 100%;
-  min-width: 0;
-
-  // ocultar título si existe
-  h2 { display: none; }
-
-  // botón real (inyectado por JS)
-  .menu__btn {
-    display: inline-block;
-    color: #ffffff;
-    background: var(--menu-accent);
-    padding: .5rem .8rem;
-    border-radius: 10px;
-    border: 1px solid rgba(0,0,0,.06);
-    box-shadow: var(--menu-shadow);
-    text-align: center;
-    font-weight: 600;
-    cursor: pointer;
-    user-select: none;
-    white-space: nowrap;
-  }
-
-  // lista de enlaces (dropdown)
-  a {
-    display: none;
-    color: var(--menu-fg);
-    text-decoration: none;
-    background: var(--menu-bg);
-    padding: .55rem .85rem;
-    border-radius: 8px;
-    border: 1px solid var(--menu-border);
-    transition: background .15s ease, color .15s ease;
-    min-width: 220px;
-    white-space: nowrap;
-
-    &:hover,
-    &:focus-visible {
-      background: rgba(96,0,0,.06);
-      color: var(--menu-accent);
-      outline: none;
-    }
-  }
-
-  // estado desplegado al hover/focus: muestra dropdown con ancho contenido
-  &.is-open,
-  &:focus-within {
-    background: var(--menu-bg);
-    border: 1px solid var(--menu-border);
-    border-radius: 12px;
-    padding: .5rem;
-    margin-top: .25rem;
-    box-shadow: var(--menu-shadow);
-
-    // pila vertical
-    a { display: block; }
-  }
-
-  // limitar altura si hay muchos ítems
-  &.is-open,
-  &:focus-within {
-    max-height: calc(100vh - 48px);
-    overflow: auto;
-  }
+  margin-top: .5rem;
 }
 
-// Modo desplegable en pantallas pequeñas: colapsa enlaces tras un "toggle" visual
-@media (max-width: 768px) {
-  .contenedor-menu, .header__menu { a { width: 100%; } }
+/* Si se inyecta el botón .menu__btn por JS, lo ocultamos
+   para volver al menú clásico con los enlaces visibles. */
+.header__menu .menu__btn {
+  display: none !important;
 }
 
-// Si existían reglas de sidebar, neutralizarlas para este menú tipo botón
-.with-sidebar, .main-control { margin-left: 0 !important; }
+/* Enlaces: usan las clases .btn .btn--ghost / .btn--danger ya definidas,
+   con texto negro por defecto (desde .btn--ghost en _table.scss). */
+.header__menu a {
+  text-decoration: none;
+}
+
+/* Botón Menú cuando se usa .contenedor-menu (otras vistas):
+   lo hacemos más grande y legible. */
+.contenedor-menu .menu__btn {
+  display: inline-block;
+  padding: .8rem 2rem;
+  border-radius: 999px;
+  border: 2px solid #7b0f0f;
+  background-color: v.$rojo;
+  color: v.$blanco;
+  font-weight: 700;
+  font-size: 1.1rem;
+  box-shadow: 0 4px 10px rgba(0,0,0,.25);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+/* Botones/enlaces dentro del menú: también en rojo para difuminar con el header */
+.contenedor-menu a {
+  text-decoration: none;
+  background-color: v.$rojo;
+  color: v.$blanco;
+  padding: .55rem 1.5rem;
+  border-radius: 999px;
+  border: 1px solid #7b0f0f;
+  font-size: .95rem;
+  font-weight: 600;
+  box-shadow: 0 3px 8px rgba(0,0,0,.2);
+}
+
+.contenedor-menu a:hover,
+.contenedor-menu a:focus-visible {
+  background-color: #7b0f0f;
+  color: v.$blanco;
+}

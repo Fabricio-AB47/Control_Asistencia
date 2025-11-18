@@ -1,4 +1,5 @@
-@use './mixins' as m;
+@use "./mixins" as m;
+@use "./variables" as v;
 
 .main-control {
   /* Layout mobile-first: deja que internas/_contenedor.scss gobierne el layout */
@@ -25,40 +26,42 @@
 
   .buttons {
     display: flex;
-    flex-direction: column;  /* móvil */
-    gap: 1rem;
+    flex-direction: column;  /* siempre de arriba hacia abajo */
+    gap: 1.4rem;
     align-items: center;
-    margin-top: 1.25rem;
+    margin-top: 1.5rem;
 
-    @include m.tablet {
-      flex-direction: row;     /* tablet+ */
-      flex-wrap: wrap;
+    form {
+      width: 100%;
+      max-width: 420px;
+      margin: 0;
+      display: flex;
       justify-content: center;
-      gap: 1.2rem 1.6rem;
     }
-
-    form { display: inline-flex; margin: 0; }
 
     button {
-      padding: .9rem 2.2rem;
-      font-size: 1rem;
+      width: 100%;
+      padding: 1.1rem 2.6rem;
+      font-size: 1.2rem;
       font-weight: bold;
       border: none;
-      border-radius: 8px;
+      border-radius: 999px;
       cursor: pointer;
       transition: background-color .25s ease, transform .1s ease;
-      width: 100%;
-      max-width: 320px; /* móvil: botones al ancho */
-
-      @include m.tablet { width: auto; max-width: none; min-width: 220px; }
-      &:hover { transform: translateY(-1px); }
-      &:active { transform: translateY(0); }
+      background-color: v.$rojo;
+      color: v.$blanco;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: .7rem;
     }
 
-    /* Variantes de color (se mantienen) */
-    .btn-ingreso { background-color: #4caf50; color: #fff; &:hover { background-color: #45a049; } }
-    .btn-salida-almuerzo { background-color: #ff9800; color: #fff; &:hover { background-color: #e68900; } }
-    .btn-regreso-almuerzo { background-color: #2196f3; color: #fff; &:hover { background-color: #1976d2; } }
-    .btn-salida-laboral { background-color: #f44336; color: #fff; &:hover { background-color: #d32f2f; } }
+    button:hover { transform: translateY(-1px); }
+    button:active { transform: translateY(0); }
+
+    .btn-icon {
+      font-size: 2rem; /* símbolos más grandes */
+      line-height: 1;
+    }
   }
 }
