@@ -1,6 +1,5 @@
 <?php
 // Espera: $desde, $hasta, $rows, $horaProgIn, $horaProgOut, $module
-function h($s){ return htmlspecialchars($s ?? '', ENT_QUOTES, 'UTF-8'); }
 function linkMap($lat, $lon, $label='Mapa'){
   if (!$lat || !$lon || $lat==='0.000000' || $lon==='0.000000') return '';
   $u = 'https://www.google.com/maps/search/?api=1&query=' . rawurlencode($lat . ',' . $lon);
