@@ -24,6 +24,13 @@ class RegistrarController
         }
 
         // Rate limiting básico por acción
+        // Limitar la excepción de Docente solo a roles Docente
+        $isDoc = ($roleNorm==='DOCENTE' || $roleNorm==='DOCENTES');
+        $isDocAction   = in_array($action, ['docente_ingreso','docente_fin'], true);
+        $isSchedAction = in_array($action, ['ingreso','salida_almuerzo','regreso_almuerzo','salida_laboral'], true);
+        if ($isDocAction && !$isDoc) { http_response_code(403); echo 'Solo el rol DOCENTE puede usar esta acción.'; return; }
+        if ($mod === 'docente' && $isSchedAction) { http_response_code(400); echo 'Usa las acciones de Docente para timbrar.'; return; }
+
         if (!app_rate_limit('post_'.$action.'_'.$mod, 5, 10)) { http_response_code(429); echo 'Demasiadas solicitudes. Intenta nuevamente en unos segundos.'; return; }
 
         $uid = (int)$_SESSION['id_usuario'];
@@ -37,12 +44,19 @@ class RegistrarController
                 case 'salida_almuerzo':   echo $svc->registrarSalidaAlmuerzo($uid, $input); break;
                 case 'regreso_almuerzo':  echo $svc->registrarRegresoAlmuerzo($uid, $input); break;
                 case 'salida_laboral':    echo $svc->registrarSalidaLaboral($uid, $input); break;
+                case 'docente_ingreso':   echo $svc->registrarDocenteIngreso($uid, $input); break;
+                case 'docente_fin':       echo $svc->registrarDocenteFin($uid, $input); break;
                 default: http_response_code(400); echo 'Acción no soportada';
             }
         } catch (\Throwable $e) {
             error_log('registrar-mvc: '.$e->getMessage());
             http_response_code(500);
-            echo 'Error al procesar la solicitud.';
+            $fileEnv = function_exists('loadDotEnv') ? loadDotEnv() : [];
+            $dbg = function_exists('getEnvVar') ? ((getEnvVar('APP_DEBUG', $fileEnv, 'app_debug') ?? '0') === '1') : (getenv('APP_DEBUG')==='1');
+            echo ($dbg ? ('Error: ' . $e->getMessage()) : 'Error al procesar la solicitud.');
         }
     }
 }
+
+
+

@@ -4,55 +4,89 @@ app_boot_session();
 
 $error = "";
 
-if ($_SERVER["REQUEST_METHOD"] === "POST") {
-    $usuario  = trim($_POST['usuario'] ?? '');
-    $password = trim($_POST['password'] ?? '');
-
-    try {
-        $db = conexion();
-    } catch (RuntimeException $e) {
-        $error = $e->getMessage();
+// Paso 2: selección de cuenta cuando hay correos duplicados (excepto admin)
+if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['select_user_id'])) {
+    if (!function_exists('app_csrf_valid') || !app_csrf_valid()) {
+        $error = 'CSRF inválido. Recarga la página e inténtalo de nuevo.';
         include __DIR__ . "/app/Views/auth/login.php";
         exit();
     }
+    $selId = (int)($_POST['select_user_id'] ?? 0);
+    try { $db = conexion(); } catch (RuntimeException $e) { $error = $e->getMessage(); include __DIR__ . "/app/Views/auth/login.php"; exit(); }
+    if (!isset($_SESSION['login_choices']) || !is_array($_SESSION['login_choices'])) { $error = 'Sesión inválida. Intente nuevamente.'; include __DIR__ . "/app/Views/auth/login.php"; exit(); }
+    $allowed = array_column($_SESSION['login_choices'], 'id_usuario');
+    if (!in_array($selId, $allowed, true)) { $error = 'Selección inválida.'; include __DIR__ . "/app/Views/auth/login.php"; exit(); }
+    $stmt = $db->prepare("SELECT u.id_usuario, u.primer_apellido, u.primer_nombre, u.correo, u.pwd, u.id_tp_user AS id_tipo, t.detalle_tp_user AS nombre_funcion FROM usuario u INNER JOIN tipo_usuario t ON u.id_tp_user = t.id_tp_user WHERE u.id_usuario = ? LIMIT 1");
+    $stmt->execute([$selId]);
+    $user = $stmt->fetch(PDO::FETCH_ASSOC);
+    if ($user) { loginSuccess($user); }
+    $error = "Usuario no disponible."; include __DIR__ . "/app/Views/auth/login.php"; exit();
+}
+
+if ($_SERVER["REQUEST_METHOD"] === "POST" && !isset($_POST['select_user_id'])) {
+    $usuario  = trim($_POST['usuario'] ?? '');
+    $password = trim($_POST['password'] ?? '');
+
+    try { $db = conexion(); }
+    catch (RuntimeException $e) { $error = $e->getMessage(); include __DIR__ . "/app/Views/auth/login.php"; exit(); }
     $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-    // ✅ Alias para mantener compatibilidad con tu código:
-    //    - u.id_tp_user AS id_tipo
-    //    - t.detalle_tp_user AS nombre_funcion
-    $stmt = $db->prepare("
-        SELECT 
-            u.id_usuario,
-            u.primer_apellido,
-            u.primer_nombre,
-            u.correo,
-            u.pwd,
-            u.id_tp_user AS id_tipo,
-            t.detalle_tp_user AS nombre_funcion
-        FROM usuario u
-        INNER JOIN tipo_usuario t ON u.id_tp_user = t.id_tp_user
-        WHERE u.correo = ?
-        LIMIT 1
-    ");
+    // Buscar todas las cuentas por correo (permitimos correos repetidos)
+    $stmt = $db->prepare(
+        "SELECT u.id_usuario, u.primer_apellido, u.primer_nombre, u.correo, u.pwd, u.id_tp_user AS id_tipo, t.detalle_tp_user AS nombre_funcion
+           FROM usuario u INNER JOIN tipo_usuario t ON u.id_tp_user = t.id_tp_user
+          WHERE u.correo = ?"
+    );
     $stmt->execute([$usuario]);
-    $user = $stmt->fetch(PDO::FETCH_ASSOC);
+    $rows = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
 
-    if ($user) {
-        if (password_verify($password, $user['pwd'])) {
-            loginSuccess($user);
-        } elseif ($password === $user['pwd']) {
-            // Re-hash si estaba en texto plano
-            $hashed_password = password_hash($password, PASSWORD_BCRYPT);
-            $updateStmt = $db->prepare("UPDATE usuario SET pwd = ? WHERE id_usuario = ?");
-            $updateStmt->execute([$hashed_password, $user['id_usuario']]);
-            // Actualiza el array en memoria para que futuras verificaciones funcionen
-            $user['pwd'] = $hashed_password;
-            loginSuccess($user);
-        } else {
-            $error = "Usuario o contraseña incorrectos.";
+    if (!$rows) { $error = "Usuario o contraseña incorrectos."; }
+    else {
+        $matches = [];
+        foreach ($rows as $r) {
+            if (password_verify($password, $r['pwd'])) {
+                $matches[] = $r;
+            } elseif ($password === $r['pwd']) {
+                // Re-hash si estaba en texto plano
+                $hashed_password = password_hash($password, PASSWORD_BCRYPT);
+                $updateStmt = $db->prepare("UPDATE usuario SET pwd = ? WHERE id_usuario = ?");
+                $updateStmt->execute([$hashed_password, $r['id_usuario']]);
+                $r['pwd'] = $hashed_password;
+                $matches[] = $r;
+            }
         }
-    } else {
-        $error = "Usuario o contraseña incorrectos.";
+        if (count($matches) === 0) {
+            $error = "Usuario o contraseña incorrectos.";
+        } elseif (count($matches) === 1) {
+            loginSuccess($matches[0]);
+        } else {
+            // Si entre los matches está ADMIN/ADMINISTRADOR, se inicia como admin directamente
+            $hasAdmin = false; $adminUser = null;
+            foreach ($matches as $m) {
+                $roleNorm = strtoupper(strtr($m['nombre_funcion'], [ 'á'=>'a','é'=>'e','í'=>'i','ó'=>'o','ú'=>'u','ñ'=>'n','Á'=>'A','É'=>'E','Í'=>'I','Ó'=>'O','Ú'=>'U','Ñ'=>'N' ]));
+                if ($roleNorm === 'ADMIN' || $roleNorm === 'ADMINISTRADOR') { $hasAdmin = true; $adminUser = $m; break; }
+            }
+            if ($hasAdmin && $adminUser) { loginSuccess($adminUser); }
+            // Construir selección por pestañas: Administrativo vs Docente
+            $choices = [];
+            foreach ($matches as $m) {
+                $roleNorm = strtoupper(strtr($m['nombre_funcion'], [ 'á'=>'a','é'=>'e','í'=>'i','ó'=>'o','ú'=>'u','ñ'=>'n','Á'=>'A','É'=>'E','Í'=>'I','Ó'=>'O','Ú'=>'U','Ñ'=>'N' ]));
+                if ($roleNorm === 'ADMIN' || $roleNorm === 'ADMINISTRADOR') continue; // excluir admin de la selección
+                $cat = ($roleNorm === 'DOCENTE' || $roleNorm === 'DOCENTES') ? 'DOCENTE' : 'ADMINISTRATIVO';
+                $choices[] = [
+                    'id_usuario' => (int)$m['id_usuario'],
+                    'nombre'     => $m['primer_nombre'] . ' ' . $m['primer_apellido'],
+                    'rol'        => $m['nombre_funcion'],
+                    'categoria'  => $cat,
+                ];
+            }
+            if (empty($choices)) { $error = 'No hay roles elegibles.'; }
+            else {
+                $_SESSION['login_choices'] = $choices;
+                include __DIR__ . "/app/Views/auth/choose_role.php";
+                exit();
+            }
+        }
     }
 }
 
@@ -69,19 +103,19 @@ function loginSuccess($user) {
 
     // Redirige según rol a MVC (router)
     $mapIdToMod = [
-        1 => 'admin',        // ADMINISTRADOR
-        2 => 'financiero',   // FINANCIERO
-        3 => 'admisiones',   // ADMISIONES
-        4 => 'academico',    // ACADEMICO
-        5 => 'bienestar',    // BIENESTAR
-        6 => 'ti',           // TI
-        7 => 'academico',    // DOCENTES (accede a Académico)
+        1 => 'admin',
+        2 => 'financiero',
+        3 => 'admisiones',
+        4 => 'academico',
+        5 => 'bienestar',
+        6 => 'ti',
+        7 => 'docente',
+        8 => 'autoridades',
     ];
     $mod = $mapIdToMod[(int)$user['id_tipo']] ?? '';
     if ($mod === '') { echo "Tipo de usuario desconocido."; exit(); }
     $base = function_exists('appBasePath') ? appBasePath() : '';
     header('Location: ' . $base . '/public/index.php?r=dashboard&mod=' . $mod);
-    exit();
     exit();
 }
 

@@ -2,6 +2,7 @@
 namespace App\Controllers;
 
 use App\Services\RbacService;
+use PDO;
 
 class AdminController extends BaseController
 {
@@ -109,7 +110,7 @@ class AdminController extends BaseController
     {
         $this->guard();
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') { http_response_code(405); echo 'Método no permitido'; return; }
-        if (!\app_csrf_valid()) { http_response_code(403); echo 'CSRF inválido'; return; }
+        if (!app_csrf_valid()) { http_response_code(403); echo 'CSRF inválido'; return; }
         $correo = trim((string)($_POST['correo'] ?? ''));
         $nombre = trim((string)($_POST['nombre'] ?? ''));
         $segundoNombre = trim((string)($_POST['snombre'] ?? ''));
@@ -121,13 +122,24 @@ class AdminController extends BaseController
         if ($correo==='' || $nombre==='' || $segundoNombre==='' || $apellido==='' || $segundoApellido==='' || $cedula==='' || $pwd==='' || $rolId<=0) {
             $this->redirectUsers('Todos los campos son obligatorios.', true); return;
         }
-        // Validación de correo
         if (!filter_var($correo, FILTER_VALIDATE_EMAIL)) { $this->redirectUsers('Correo inválido.', true); return; }
         try {
-            $db = \conexion();
-            $s = $db->prepare('SELECT 1 FROM usuario WHERE correo=? LIMIT 1');
-            $s->execute([$correo]);
-            if ($s->fetch()) { $this->redirectUsers('El correo ya existe.', true); return; }
+            $db = conexion();
+            // Permitir correo y cédula repetidos, pero máximo 2 roles distintos por persona y sin repetir rol
+            $correoL = strtolower($correo);
+            $s = $db->prepare('SELECT id_tp_user FROM usuario WHERE cedula = ?');
+            $s->execute([$cedula]);
+            $roles = array_map('intval', $s->fetchAll(PDO::FETCH_COLUMN) ?: []);
+            if (in_array($rolId, $roles, true)) { $this->redirectUsers('La persona ya tiene ese rol.', true); return; }
+
+            // Validar máximo 2 usuarios con la misma cédula y correo
+            $s2 = $db->prepare('SELECT COUNT(*) FROM usuario WHERE cedula = ? AND correo = ?');
+            $s2->execute([$cedula, $correoL]);
+            $countPersona = (int)($s2->fetchColumn() ?: 0);
+            if ($countPersona >= 2) { $this->redirectUsers('Máximo 2 usuarios con la misma cédula y correo.', true); return; }
+            // Límite de cantidad de roles deshabilitado para permitir registrar más de 2 por persona.
+            // if (count($roles) >= 2) { $this->redirectUsers('Máximo 2 roles distintos por persona.', true); return; }
+
             $hash = password_hash($pwd, PASSWORD_BCRYPT);
             $up = function($s){ return function_exists('mb_strtoupper') ? mb_strtoupper($s,'UTF-8') : strtoupper($s); };
             $nombreU  = $up($nombre);
@@ -138,13 +150,23 @@ class AdminController extends BaseController
             $ins = $db->prepare('INSERT INTO usuario (primer_apellido, segundo_apellido, primer_nombre, segundo_nombre, cedula, correo, pwd, id_tp_user) VALUES (?,?,?,?,?,?,?,?)');
             $ins->execute([$apU, $sApU, $nombreU, $sNombreU, $cedula, $correoL, $hash, $rolId]);
             $this->redirectUsers('Usuario creado correctamente.');
+        } catch (\PDOException $e) {
+            error_log('admin users create: ' . $e->getMessage());
+            $msg = $e->getMessage();
+            if (strpos($msg, 'Duplicate entry') !== false || $e->getCode() === '23000') {
+                $this->redirectUsers('La base de datos impide correos/cédulas repetidos (índice único). Elimina esa restricción para permitir hasta 2 roles por persona.', true);
+                return;
+            }
+            $fileEnv = function_exists('loadDotEnv') ? loadDotEnv() : [];
+            $dbg = function_exists('getEnvVar') ? ((getEnvVar('APP_DEBUG', $fileEnv, 'app_debug') ?? '0') === '1') : (getenv('APP_DEBUG')==='1');
+            $this->redirectUsers($dbg ? ('Error: '.$msg) : 'Error al crear el usuario.', true);
         } catch (\Throwable $e) {
             error_log('admin users create: ' . $e->getMessage());
-            $this->redirectUsers('Error al crear el usuario.', true);
+            $fileEnv = function_exists('loadDotEnv') ? loadDotEnv() : [];
+            $dbg = function_exists('getEnvVar') ? ((getEnvVar('APP_DEBUG', $fileEnv, 'app_debug') ?? '0') === '1') : (getenv('APP_DEBUG')==='1');
+            $this->redirectUsers($dbg ? ('Error: '.$e->getMessage()) : 'Error al crear el usuario.', true);
         }
-    }
-
-    private function redirectUsers(string $message, bool $isError=false): void
+    }private function redirectUsers(string $message, bool $isError=false): void
     {
         $base = function_exists('appBasePath') ? appBasePath() : '';
         $q = $isError ? ('err=' . urlencode($message)) : ('msg=' . urlencode($message));

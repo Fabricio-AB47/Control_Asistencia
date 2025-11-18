@@ -26,15 +26,15 @@ class ReporteController extends BaseController
         $uid      = (int)$_SESSION['id_usuario'];
 
         $rbac = new RbacService();
-        // Admin puede ver reportes de cualquier módulo
-        $roleNorm = strtoupper(strtr($rol,[
+        // Normaliza acentos del rol para comparaciones
+        $roleNorm = strtoupper(strtr($rol, [
             'á'=>'a','é'=>'e','í'=>'i','ó'=>'o','ú'=>'u','ñ'=>'n',
             'Á'=>'A','É'=>'E','Í'=>'I','Ó'=>'O','Ú'=>'U','Ñ'=>'N'
         ]));
         $isAdmin = ($roleNorm==='ADMIN' || $roleNorm==='ADMINISTRADOR');
         if (!$isAdmin && !$rbac->canAccessModule($rol, $mod)) {
             http_response_code(403);
-            echo 'Acceso no autorizado para este módulo';
+            echo 'Acceso no autorizado para este modulo';
             return;
         }
 
@@ -44,18 +44,26 @@ class ReporteController extends BaseController
         $hasta = $this->parseYmd($_GET['hasta'] ?? '') ?? $hoy;
         if ($desde > $hasta) { [$desde, $hasta] = [$hasta, $desde]; }
 
-        try {
-            $db = conexion();
-        } catch (\RuntimeException $e) {
-            http_response_code(500);
-            echo 'No se pudo conectar a la base de datos: ' . htmlspecialchars($e->getMessage(), ENT_QUOTES, 'UTF-8');
-            return;
-        }
-        $svc = new ReporteService($db);
-        $cfg = $svc->horarioProgramaUsuario($uid);
-        $rows = $svc->timbres($uid, $desde, $hasta);
+        try { $db = conexion(); }
+        catch (\RuntimeException $e) { http_response_code(500); echo 'No se pudo conectar a la base de datos: ' . htmlspecialchars($e->getMessage(), ENT_QUOTES, 'UTF-8'); return; }
 
-        $this->render('reporte/timbres', [
+        $svc = new ReporteService($db);
+        $roleNorm2 = strtoupper(strtr($rol, [
+            'á'=>'a','é'=>'e','í'=>'i','ó'=>'o','ú'=>'u','ñ'=>'n',
+            'Á'=>'A','É'=>'E','Í'=>'I','Ó'=>'O','Ú'=>'U','Ñ'=>'N'
+        ]));
+        $isDoc = ($mod === 'docente' && ($roleNorm2 === 'DOCENTE' || $roleNorm2 === 'DOCENTES'));
+        if ($isDoc) {
+            $rows = $svc->timbresDocente($uid, $desde, $hasta);
+            $view = 'reporte/timbres_docente';
+            $cfg = ['hora_ingreso_personal'=>null,'hora_salida_personal'=>null];
+        } else {
+            $cfg = $svc->horarioProgramaUsuario($uid);
+            $rows = $svc->timbres($uid, $desde, $hasta);
+            $view = 'reporte/timbres';
+        }
+
+        $this->render($view, [
             'title'     => 'Reporte de Timbrado',
             'module'    => $mod,
             'nombre'    => $nombre,
@@ -75,8 +83,10 @@ class ReporteController extends BaseController
         app_ensure_csrf_token();
 
         $rol      = $_SESSION['tipo']     ?? '';
-        // Solo Admin puede ver el reporte global
-        $roleNorm = strtoupper(strtr($rol,[ 'á'=>'a','é'=>'e','í'=>'i','ó'=>'o','ú'=>'u','ñ'=>'n','Á'=>'A','É'=>'E','Í'=>'I','Ó'=>'O','Ú'=>'U','Ñ'=>'N' ]));
+        $roleNorm = strtoupper(strtr($rol, [
+            'á'=>'a','é'=>'e','í'=>'i','ó'=>'o','ú'=>'u','ñ'=>'n',
+            'Á'=>'A','É'=>'E','Í'=>'I','Ó'=>'O','Ú'=>'U','Ñ'=>'N'
+        ]));
         $isAdmin = ($roleNorm==='ADMIN' || $roleNorm==='ADMINISTRADOR');
         if (!$isAdmin) { http_response_code(403); echo 'Acceso no autorizado'; return; }
 
@@ -94,7 +104,6 @@ class ReporteController extends BaseController
         $svc = new \App\Services\ReporteService($db);
         $rows = $svc->timbresAll($desde, $hasta, $qName, $fRol);
 
-        // Lista de roles (excepto admin)
         $rolesList = ($db->query("SELECT detalle_tp_user FROM tipo_usuario WHERE id_tp_user <> 1 ORDER BY detalle_tp_user"))->fetchAll(\PDO::FETCH_COLUMN) ?: [];
 
         $rbac = new \App\Services\RbacService();
@@ -111,3 +120,4 @@ class ReporteController extends BaseController
         ]);
     }
 }
+

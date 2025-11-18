@@ -157,4 +157,32 @@ class ReporteService
         $stmt->execute();
         return $stmt->fetchAll(\PDO::FETCH_ASSOC) ?: [];
     }
+
+    public function timbresDocente(int $uid, string $desde, string $hasta): array
+    {
+        $sql = "
+        SELECT
+            fr.id_fecha_registro,
+            fr.fecha_ingreso AS fecha,
+            (
+              SELECT GROUP_CONCAT(CONCAT(IFNULL(hi.hora_ing_doc,''''),'|',IFNULL(hi.latitud,''''),'|',IFNULL(hi.longitud,''''),'|',IFNULL(hi.direccion,'''')) ORDER BY hi.hora_ing_doc SEPARATOR ';;')
+              FROM horario_docente_ingreso_1 hi
+              WHERE hi.id_usuario = fr.id_usuario AND hi.id_fecha_registro = fr.id_fecha_registro
+            ) AS ingresos,
+            (
+              SELECT GROUP_CONCAT(CONCAT(IFNULL(hf.hora_sl_doc,''''),'|',IFNULL(hf.latitud,''''),'|',IFNULL(hf.longitud,''''),'|',IFNULL(hf.direccion,'''')) ORDER BY hf.hora_sl_doc SEPARATOR ';;')
+              FROM horario_fin_docente_1 hf
+              WHERE hf.id_usuario = fr.id_usuario AND hf.id_fecha_registro = fr.id_fecha_registro
+            ) AS salidas
+        FROM fecha_registro fr
+        WHERE fr.id_usuario = :uid
+          AND fr.fecha_ingreso BETWEEN :desde AND :hasta
+        ORDER BY fr.fecha_ingreso DESC";
+        $st = $this->db->prepare($sql);
+        $st->bindValue(':uid', $uid, PDO::PARAM_INT);
+        $st->bindValue(':desde', $desde, PDO::PARAM_STR);
+        $st->bindValue(':hasta', $hasta, PDO::PARAM_STR);
+        $st->execute();
+        return $st->fetchAll(PDO::FETCH_ASSOC) ?: [];
+    }
 }

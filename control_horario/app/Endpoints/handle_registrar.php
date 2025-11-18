@@ -29,7 +29,9 @@ $input = app_json_input();
 try {
     $db = conexion();
     $svc = new ControlService($db);
-    $action = $action ?? '';
+    // Determinar la acción desde la URL, POST o el JSON recibido
+    $action = $_GET['action'] ?? $_POST['action'] ?? ($input['accion'] ?? '');
+    $action = is_string($action) ? $action : '';
     switch ($action) {
         case 'ingreso':
             $msg = $svc->registrarIngreso($uid, $input);

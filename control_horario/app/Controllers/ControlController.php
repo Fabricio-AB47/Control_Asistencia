@@ -21,11 +21,17 @@ class ControlController extends BaseController
             return;
         }
 
-        // Redirección post-acción (dashboard del módulo)
         $redirect = $rbac->dashboardForModule($mod);
 
-        // Render
-        $this->render('control/index', [
+        // Normaliza acentos del rol para comparaciones confiables
+        $roleNorm = strtoupper(strtr($rol, [
+            'á'=>'a','é'=>'e','í'=>'i','ó'=>'o','ú'=>'u','ñ'=>'n',
+            'Á'=>'A','É'=>'E','Í'=>'I','Ó'=>'O','Ú'=>'U','Ñ'=>'N'
+        ]));
+        $isDocente = ($mod === 'docente' && ($roleNorm==='DOCENTE' || $roleNorm==='DOCENTES'));
+        $viewName = $isDocente ? 'control/docente' : 'control/index';
+
+        $this->render($viewName, [
             'title'     => 'Control Horario',
             'module'    => $mod,
             'redirect'  => $redirect,
@@ -36,3 +42,4 @@ class ControlController extends BaseController
         ]);
     }
 }
+

@@ -1,6 +1,5 @@
 <?php
 declare(strict_types=1);
-session_start();
 
 require __DIR__ . '/../app/init.php';
 app_boot_session();
@@ -63,5 +62,7 @@ switch ($route) {
         echo "Rutas disponibles:\n";
         echo "- /public/index.php?r=control&mod=ti\n";
         echo "- /public/index.php?r=reporte&mod=ti&desde=YYYY-MM-DD&hasta=YYYY-MM-DD\n";
-        echo "  (mod: ti | financiero | admisiones | academico | bienestar)\n";
+        echo "  (mod: ti | financiero | admisiones | academico | bienestar | autoridades | docente)\n";
 }
+
+

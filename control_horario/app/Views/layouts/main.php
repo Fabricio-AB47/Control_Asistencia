@@ -14,8 +14,7 @@ $base = function_exists('appBasePath') ? appBasePath() : '';
   <script src="<?= $base ?>/build/js/menu.js" defer></script>
   <title><?= htmlspecialchars($title ?? 'App', ENT_QUOTES, 'UTF-8') ?></title>
   <style> .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;} </style>
-  <?php /* Podrías inyectar CSP/meta adicionales aquí */ ?>
-  </head>
+</head>
 <body>
 
 <header class="header">
@@ -37,6 +36,7 @@ $base = function_exists('appBasePath') ? appBasePath() : '';
     <?php
       // Enlaces especiales para ADMIN dentro del menú
       $rolMenu = $_SESSION['tipo'] ?? '';
+      // Normaliza acentos del rol para detectar ADMIN/ADMINISTRADOR
       $rolNorm = strtr($rolMenu, [
         'á'=>'a','é'=>'e','í'=>'i','ó'=>'o','ú'=>'u','ñ'=>'n',
         'Á'=>'A','É'=>'E','Í'=>'I','Ó'=>'O','Ú'=>'U','Ñ'=>'N'
@@ -56,6 +56,7 @@ $base = function_exists('appBasePath') ? appBasePath() : '';
         <a class="btn btn--ghost" href="<?= $baseUrl ?>/public/index.php?r=reporte&mod=<?= htmlspecialchars($module,ENT_QUOTES,'UTF-8') ?>">Reporte</a>
       <?php endif; ?>
     <?php endif; ?>
+
     <a class="btn btn--danger" href="<?= $base ?>/logout.php?logout=1">Cerrar Sesión</a>
   </nav>
 </header>

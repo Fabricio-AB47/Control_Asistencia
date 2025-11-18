@@ -23,6 +23,8 @@ class RbacService
             case 'ADMINISTRADOR':
                 // Admin no timbra: solo módulo 'admin' en la UI
                 return ['admin'];
+            case 'AUTORIDADES':
+                return ['autoridades'];
             case 'TI':
                 return ['ti'];
             case 'FINANCIERO':
@@ -34,7 +36,7 @@ class RbacService
                 return ['academico'];
             case 'DOCENTES':
             case 'DOCENTE':
-                return ['academico'];
+                return ['docente'];
             case 'BIENESTAR':
                 return ['bienestar'];
             default:
@@ -43,6 +45,7 @@ class RbacService
                 if ($role === 'Admisiones') return ['admisiones'];
                 if ($role === 'Académico' || $role === 'Academico') return ['academico'];
                 if ($role === 'Bienestar') return ['bienestar'];
+                if ($role === 'Autoridades') return ['autoridades'];
                 if ($role === 'Admin') return ['admin','ti','financiero','admisiones','academico','bienestar'];
                 if ($role === 'TI') return ['ti'];
                 return [];
@@ -77,3 +80,8 @@ class RbacService
         return $menu;
     }
 }
+
+
+
+
+

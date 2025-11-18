@@ -101,12 +101,13 @@ class ControlService
             $st->execute([$uid, $idFecha]);
             if ($st->fetch()) {
                 $this->db->rollBack();
-                return 'ℹ️ Ya existe un registro de ingreso para hoy.';
+                return '⚠️ Ya existe un registro de ingreso para hoy.';
             }
 
             $prog   = new DateTime("$hoy $horaProgramada");
             $now    = new DateTime("$hoy $ahora");
             $tolEnd = (clone $prog)->modify('+10 minutes');
+
             if ($now < $prog) {
                 $detalleEstado = 'Ingreso antes de su hora de ingreso';
             } elseif ($now <= $tolEnd) {
@@ -117,16 +118,18 @@ class ControlService
 
             $idEstado = $this->ensureCatalog('estado_ingreso', 'id_estado_ingreso', 'detalle_ingreso', $detalleEstado);
 
-            $ins = $this->db->prepare('INSERT INTO horario_ingreso (id_usuario, id_hora_entrada, id_estado_ingreso, id_fecha_registro, hora_ingreso, latitud, longitud, direccion) VALUES (?, ?, ?, ?, ?, ?, ?, ?)');
-            $ins->execute([$uid, $idHoraEntrada, $idEstado, $idFecha, $ahora, $latitud, $longitud, $direccion]);
+            // Guardar también el id_hora_entrada para respetar la FK
+            $ins = $this->db->prepare('INSERT INTO horario_ingreso (id_usuario, id_fecha_registro, id_estado_ingreso, id_hora_entrada, hora_ingreso, latitud, longitud, direccion) VALUES (?, ?, ?, ?, ?, ?, ?, ?)');
+            $ins->execute([$uid, $idFecha, $idEstado, $idHoraEntrada, $ahora, $latitud, $longitud, $direccion]);
 
             $this->db->commit();
-            return '✅ Ingreso registrado con estado: ' . $detalleEstado;
+            return '✅ Ingreso registrado con estado: ' . $detalleEstado . '.';
         } catch (\Throwable $e) {
             if ($this->db->inTransaction()) $this->db->rollBack();
             throw $e;
         }
     }
+
 
     public function registrarSalidaAlmuerzo(int $uid, array $input, string $tz = 'America/Guayaquil'): string
     {
@@ -167,8 +170,8 @@ class ControlService
             if ($this->db->inTransaction()) $this->db->rollBack();
             throw $e;
         }
-    }
 
+}
     public function registrarRegresoAlmuerzo(int $uid, array $input, string $tz = 'America/Guayaquil'): string
     {
         date_default_timezone_set($tz);
@@ -202,8 +205,8 @@ class ControlService
             if ($this->db->inTransaction()) $this->db->rollBack();
             throw $e;
         }
-    }
 
+}
     public function registrarSalidaLaboral(int $uid, array $input, string $tz = 'America/Guayaquil'): string
     {
         date_default_timezone_set($tz);
@@ -263,6 +266,96 @@ class ControlService
             if ($this->db->inTransaction()) $this->db->rollBack();
             throw $e;
         }
+    // ====== REGISTROS DOCENTE (sin horario programado, ventanas específicas) ======
+}
+    private function docenteSlotIndex(string $type, string $tz, string $ahora): ?int
+{
+    $dtz = new \DateTimeZone($tz);
+    $todayDt = new DateTime('now',$dtz);
+    $today = $todayDt->format('Y-m-d');
+    $dow = (int)$todayDt->format('N'); // 1=Lunes .. 7=Domingo
+    if ($dow >= 5 && $dow <= 6) {
+        // Viernes (5) y Sábado (6): 18:00-20:00, 20:00-22:00
+        $slots = ($type === 'ingreso') ? ['18:00:00','20:00:00'] : ['20:00:00','22:00:00'];
+    } elseif ($dow >= 1 && $dow <= 4) {
+        // Lunes a Jueves: 18:30, 19:30, 20:30 (ingresos) / 19:30, 20:30, 21:30 (fines)
+        $slots = ($type === 'ingreso') ? ['18:30:00','19:30:00','20:30:00'] : ['19:30:00','20:30:00','21:30:00'];
+    } else {
+        return null; // Domingo: sin ventanas
     }
+    $now = new DateTime($today.' '.$ahora, $dtz);
+    for ($i=0; $i < count($slots); $i++) {
+        $t = new DateTime($today.' '.$slots[$i], $dtz);
+        $start = (clone $t)->modify('-10 minutes'); // 10 min antes como máximo
+        $end = ($i < count($slots)-1)
+            ? (new DateTime($today.' '.$slots[$i+1], $dtz))->modify('-10 minutes')
+            : (clone $t)->modify('+90 minutes');
+        if ($now >= $start && $now < $end) return $i; // ventana válida
+    }
+    }
+
+    private function docenteSlotUsed(string $table, string $timeCol, int $uid, int $idFecha, string $tz, string $ahora, string $type): bool
+    {
+        $q = $this->db->prepare("SELECT $timeCol FROM $table WHERE id_usuario = ? AND id_fecha_registro = ? ORDER BY $timeCol ASC");
+        $q->execute([$uid, $idFecha]);
+        $rows = $q->fetchAll(PDO::FETCH_COLUMN) ?: [];
+        $slotNow = $this->docenteSlotIndex($type, $tz, $ahora);
+        if ($slotNow === null) return true; // fuera de ventana => tratar como usado para bloquear
+        foreach ($rows as $t) {
+            $slotPrev = $this->docenteSlotIndex($type, $tz, (string)$t);
+            if ($slotPrev === $slotNow) return true; // ya usó esta ventana
+        }
+        return false;
+    }
+
+    public function registrarDocenteIngreso(int $uid, array $input, string $tz = 'America/Guayaquil'): string
+    {
+        date_default_timezone_set($tz);
+        $hoy   = date('Y-m-d');
+        $ahora = date('H:i:s');
+        $direccion = $this->normalizeDireccion($input['direccion'] ?? null);
+        [$latitud, $longitud] = $this->validateUbicacion($input['latitud'] ?? null, $input['longitud'] ?? null, $direccion);
+        $this->db->beginTransaction();
+        try {
+            $idFecha = $this->getOrCreateFechaRegistro($uid, $hoy);
+            // Limite 3 por día
+            $q = $this->db->prepare('SELECT COUNT(*) FROM horario_docente_ingreso_1 WHERE id_usuario = ? AND id_fecha_registro = ?');
+            $q->execute([$uid, $idFecha]);
+            if ((int)$q->fetchColumn() >= 3) { $this->db->rollBack(); return '✋ Ya registraste 3 ingresos hoy.'; }
+            // Ventana específica
+            if ($this->docenteSlotIndex('ingreso', $tz, $ahora) === null) { $this->db->rollBack(); return '⏰ Fuera de la ventana permitida para ingreso (18:30, 19:30 o 20:30 con 10 min antes).'; }
+            if ($this->docenteSlotUsed('horario_docente_ingreso_1', 'hora_ing_doc', $uid, $idFecha, $tz, $ahora, 'ingreso')) { $this->db->rollBack(); return '🔁 Ya registraste en esta ventana de ingreso.'; }
+            $ins = $this->db->prepare('INSERT INTO horario_docente_ingreso_1 (id_usuario, id_fecha_registro, hora_ing_doc, latitud, longitud, direccion) VALUES (?, ?, ?, ?, ?, ?)');
+            $ins->execute([$uid, $idFecha, $ahora, $latitud, $longitud, $direccion]);
+            $this->db->commit();
+            return '✅ Ingreso docente registrado a las ' . $ahora . '.';
+        } catch (\Throwable $e) { if ($this->db->inTransaction()) $this->db->rollBack(); throw $e; }
+
+}
+    public function registrarDocenteFin(int $uid, array $input, string $tz = 'America/Guayaquil'): string
+    {
+        date_default_timezone_set($tz);
+        $hoy   = date('Y-m-d');
+        $ahora = date('H:i:s');
+        $direccion = $this->normalizeDireccion($input['direccion'] ?? null);
+        [$latitud, $longitud] = $this->validateUbicacion($input['latitud'] ?? null, $input['longitud'] ?? null, $direccion);
+        $this->db->beginTransaction();
+        try {
+            $idFecha = $this->getOrCreateFechaRegistro($uid, $hoy);
+            $q = $this->db->prepare('SELECT COUNT(*) FROM horario_fin_docente_1 WHERE id_usuario = ? AND id_fecha_registro = ?');
+            $q->execute([$uid, $idFecha]);
+            if ((int)$q->fetchColumn() >= 3) { $this->db->rollBack(); return '✋ Ya registraste 3 fines hoy.'; }
+            if ($this->docenteSlotIndex('fin', $tz, $ahora) === null) { $this->db->rollBack(); return '⏰ Fuera de la ventana permitida para fin (19:30, 20:30 o 21:30 con 10 min antes).'; }
+            if ($this->docenteSlotUsed('horario_fin_docente_1', 'hora_sl_doc', $uid, $idFecha, $tz, $ahora, 'fin')) { $this->db->rollBack(); return '🔁 Ya registraste en esta ventana de fin.'; }
+            $ins = $this->db->prepare('INSERT INTO horario_fin_docente_1 (id_usuario, id_fecha_registro, hora_sl_doc, latitud, longitud, direccion) VALUES (?, ?, ?, ?, ?, ?)');
+            $ins->execute([$uid, $idFecha, $ahora, $latitud, $longitud, $direccion]);
+            $this->db->commit();
+            return '✅ Fin docente registrado a las ' . $ahora . '.';
+        } catch (\Throwable $e) { if ($this->db->inTransaction()) $this->db->rollBack(); throw $e; }
 }
 
+
+
+
+
+}
