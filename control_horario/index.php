@@ -26,6 +26,13 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['select_user_id'])) {
 if ($_SERVER["REQUEST_METHOD"] === "POST" && !isset($_POST['select_user_id'])) {
     $usuario  = trim($_POST['usuario'] ?? '');
     $password = trim($_POST['password'] ?? '');
+    // Rate limit login attempts per IP to mitigate brute force
+    $ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
+    if (function_exists('app_rate_limit') && !app_rate_limit('login_'.$ip, 5, 60)) {
+        $error = 'Demasiados intentos. Intenta nuevamente en un minuto.';
+        include __DIR__ . "/app/Views/auth/login.php";
+        exit();
+    }
 
     try { $db = conexion(); }
     catch (RuntimeException $e) { $error = $e->getMessage(); include __DIR__ . "/app/Views/auth/login.php"; exit(); }

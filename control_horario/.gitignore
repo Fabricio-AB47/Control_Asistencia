@@ -1,1 +1,5 @@
-core/.env
+/.env
+node_modules/
+/.vscode/
+build/
+/*.logcore/.env

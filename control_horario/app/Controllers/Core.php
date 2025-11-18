@@ -50,6 +50,12 @@ function appBasePath(): string {
     return $cached = $val;
 }
 
+if (!function_exists('h')) {
+    function h($s): string {
+        return htmlspecialchars($s ?? '', ENT_QUOTES, 'UTF-8');
+    }
+}
+
 function conexion(): \PDO {
     $fileEnv = loadDotEnv();
     $host = getEnvVar('DB_HOST', $fileEnv, 'db_host');

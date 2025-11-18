@@ -27,11 +27,17 @@ if (!headers_sent()) {
     header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
     header('Pragma: no-cache');
     header('Expires: 0');
-    // CSP permisiva pero segura para el proyecto actual
-    // Permitimos 'unsafe-inline' en script temporalmente porque existen scripts inline en vistas.
-    // Recomendado: migrarlos a archivos .js y retirar 'unsafe-inline'.
-    $csp = "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https://nominatim.openstreetmap.org; frame-src https://www.google.com; frame-ancestors 'none'";
+    // CSP: intentar evitar 'unsafe-inline' para scripts; mantener temporalmente style inline
+    // Recomendado: migrar scripts inline a archivos .js y usar nonces/hashes para CSP.
+    $csp = "default-src 'self'; script-src 'self' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https://nominatim.openstreetmap.org; frame-src https://www.google.com; frame-ancestors 'none'";
     header("Content-Security-Policy: $csp");
+
+    // Añadir HSTS si la conexión es HTTPS
+    $fileEnv = function_exists('loadDotEnv') ? loadDotEnv() : [];
+    $https = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off');
+    if ($https) {
+        header('Strict-Transport-Security: max-age=63072000; includeSubDomains; preload');
+    }
 }
 
 // Lightweight helpers
@@ -84,7 +90,10 @@ if (!function_exists('app_session_guard')) {
 if (!function_exists('app_boot_session')) {
     function app_boot_session(): void {
         // Parámetros de cookie de sesión
-        $secure = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off');
+        $fileEnv = function_exists('loadDotEnv') ? loadDotEnv() : [];
+        $forceSecure = (getEnvVar('FORCE_SECURE_COOKIES', $fileEnv, 'force_secure_cookies') ?? '0') === '1';
+        $https = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off');
+        $secure = $https || $forceSecure;
         $params = [
             'lifetime' => 0,
             'path'     => '/',
