@@ -10,12 +10,16 @@
       <input type="hidden" name="action" value="timbres_edit">
       <div class="registro-campo">
         <label class="required">Usuario</label>
-        <select name="uid" required>
+        <select name="uid" id="uid-select" required>
           <option value="">-- Selecciona --</option>
           <?php foreach ($usuarios as $u): $sel = (!empty($uidSel) && (int)$uidSel===(int)$u['id_usuario']) ? 'selected' : ''; ?>
-            <option value="<?= (int)$u['id_usuario'] ?>" <?= $sel ?>><?= htmlspecialchars($u['nombre'],ENT_QUOTES,'UTF-8') ?></option>
+            <option value="<?= (int)$u['id_usuario'] ?>" data-rol="<?= htmlspecialchars($u['rol'] ?? '',ENT_QUOTES,'UTF-8') ?>" <?= $sel ?>><?= htmlspecialchars($u['nombre'],ENT_QUOTES,'UTF-8') ?></option>
           <?php endforeach; ?>
         </select>
+      </div>
+      <div class="registro-campo">
+        <label>Rol del usuario</label>
+        <input type="text" id="rol-usuario" value="<?= htmlspecialchars($rolSel ?? '',ENT_QUOTES,'UTF-8') ?>" readonly>
       </div>
       <div class="registro-campo">
         <label class="required">Fecha</label>
@@ -53,4 +57,18 @@
     </form>
   </div>
 </main>
+<script>
+(function(){
+  const sel = document.getElementById('uid-select');
+  const rolInput = document.getElementById('rol-usuario');
+  if (!sel || !rolInput) return;
+  function actualizarRol(){
+    const opt = sel.options[sel.selectedIndex];
+    const rol = opt && opt.dataset.rol ? opt.dataset.rol : '';
+    rolInput.value = rol;
+  }
+  sel.addEventListener('change', actualizarRol);
+  actualizarRol();
+})();
+</script>
 

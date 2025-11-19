@@ -51,9 +51,11 @@ class RegistrarController
         } catch (\Throwable $e) {
             error_log('registrar-mvc: '.$e->getMessage());
             http_response_code(500);
-            $fileEnv = function_exists('loadDotEnv') ? loadDotEnv() : [];
-            $dbg = function_exists('getEnvVar') ? ((getEnvVar('APP_DEBUG', $fileEnv, 'app_debug') ?? '0') === '1') : (getenv('APP_DEBUG')==='1');
-            echo ($dbg ? ('Error: ' . $e->getMessage()) : 'Error al procesar la solicitud.');
+            $msg = trim($e->getMessage());
+            if ($msg === '') {
+                $msg = 'Ocurri� un error al procesar la solicitud.';
+            }
+            echo 'Error: ' . $msg;
         }
     }
 }

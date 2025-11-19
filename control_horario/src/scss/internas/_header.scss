@@ -17,7 +17,15 @@
 .header__welcome {
   margin: 0;
   color: v.$blanco;
+  text-align: left;
+  align-self: flex-start;
+  width: 100%;
   @include m.fluid-type(1.8rem, 2.4rem);
+
+  @include m.desktop {
+    max-width: 1200px;
+    margin-left: .5rem;
+  }
 }
 
 .header__brand {

@@ -39,6 +39,21 @@
       justify-content: center;
     }
 
+    /* Enlaces tipo botón (panel de acceso rápido):
+       reutilizan el mismo estilo que los botones principales */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: .7rem;
+      width: 100%;
+      max-width: 420px;
+      padding: 1.1rem 2.6rem;
+      font-size: 1.2rem;
+      font-weight: bold;
+      border-radius: 999px; /* forma píldora como en Registrar Ingreso */
+    }
+
     button {
       width: 100%;
       padding: 1.1rem 2.6rem;

@@ -21,7 +21,7 @@
   justify-content: center;
   gap: .5rem;
   padding: .65rem 1.1rem;
-  border-radius: .6rem;
+  border-radius: 999px; /* bordes muy redondeados tipo píldora */
   font-family: v.$fuente_principal;
   font-weight: v.$bold;
   line-height: 1;

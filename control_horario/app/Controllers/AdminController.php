@@ -310,7 +310,13 @@ class AdminController extends BaseController
     {
         $this->guard();
         $db = \conexion();
-        $usuarios = ($db->query('SELECT id_usuario, CONCAT_WS(" ", primer_nombre, primer_apellido) AS nombre FROM usuario ORDER BY primer_apellido, primer_nombre'))->fetchAll() ?: [];
+        // Traer también el rol de cada usuario
+        $usuarios = ($db->query('SELECT u.id_usuario,
+                                        CONCAT_WS(" ", u.primer_nombre, u.primer_apellido) AS nombre,
+                                        COALESCE(t.detalle_tp_user, "") AS rol
+                                 FROM usuario u
+                                 LEFT JOIN tipo_usuario t ON t.id_tp_user = u.id_tp_user
+                                 ORDER BY u.primer_apellido, u.primer_nombre'))->fetchAll() ?: [];
         $uid = (int)($_GET['uid'] ?? 0);
         $fecha = $this->parseYmd($_GET['fecha'] ?? '') ?? (new \DateTime('now', new \DateTimeZone('America/Guayaquil')))->format('Y-m-d');
         $datos = ['ingreso'=>'','sl'=>'','rt'=>'','salida'=>''];
@@ -334,11 +340,23 @@ class AdminController extends BaseController
                 $datos['salida']  = $row['hora_salida'] ?? '';
             }
         }
+        // Rol seleccionado por defecto (si hay usuario seleccionado)
+        $rolUsuarioSel = '';
+        if ($uid > 0) {
+            foreach ($usuarios as $u) {
+                if ((int)$u['id_usuario'] === $uid) {
+                    $rolUsuarioSel = (string)($u['rol'] ?? '');
+                    break;
+                }
+            }
+        }
+
         $rbac = new RbacService();
         $this->render('admin/timbres', [
             'title'=>'Editar Timbres', 'module'=>'admin',
             'menu'=>$rbac->menuForRole($_SESSION['tipo'] ?? '', 'admin'),
             'usuarios'=>$usuarios, 'uidSel'=>$uid, 'fechaSel'=>$fecha, 'datos'=>$datos,
+            'rolSel'=>$rolUsuarioSel,
             'msg'=>$_GET['msg']??'', 'err'=>$_GET['err']??''
         ]);
     }
@@ -385,18 +403,81 @@ class AdminController extends BaseController
                     $q->execute([$idEstado, $uid, $idFecha]);
                 }
             }
+            // Tomar latitud/longitud/dirección del ingreso (si existe), para reusar en inserts
+            $coordLat = $coordLon = $coordDir = null;
+            $qi = $db->prepare('SELECT latitud, longitud, direccion FROM horario_ingreso WHERE id_usuario=? AND id_fecha_registro=? LIMIT 1');
+            $qi->execute([$uid, $idFecha]);
+            if ($rowIn = $qi->fetch(\PDO::FETCH_ASSOC)) {
+                $coordLat = $rowIn['latitud'];
+                $coordLon = $rowIn['longitud'];
+                $coordDir = $rowIn['direccion'];
+            }
+
             if ($sl !== '') {
-                $q = $db->prepare('UPDATE horario_sl_almuerzo SET hora_sl_almuerzo=? WHERE id_usuario=? AND id_fecha_registro=?');
-                $q->execute([$sl, $uid, $idFecha]);
+                // ¿Existe salida almuerzo?
+                $q = $db->prepare('SELECT 1 FROM horario_sl_almuerzo WHERE id_usuario=? AND id_fecha_registro=? LIMIT 1');
+                $q->execute([$uid, $idFecha]);
+                if ($q->fetch()) {
+                    $q = $db->prepare('UPDATE horario_sl_almuerzo SET hora_sl_almuerzo=? WHERE id_usuario=? AND id_fecha_registro=?');
+                    $q->execute([$sl, $uid, $idFecha]);
+                } else {
+                    if ($coordLat === null || $coordLon === null || $coordDir === null) {
+                        $this->redirectEditTimbres('No existe un registro de ingreso para copiar ubicación en salida de almuerzo.', true);
+                        return;
+                    }
+                    $idEstadoSl = $this->ensureCatalog($db, 'estado_salida_almuerzo', 'id_estado_salida_almuerzo', 'detalle_salida_almuerzo', 'Salida al almuerzo');
+                    $q = $db->prepare('INSERT INTO horario_sl_almuerzo (id_usuario, id_fecha_registro, id_estado_salida_almuerzo, hora_sl_almuerzo, latitud, longitud, direccion) VALUES (?, ?, ?, ?, ?, ?, ?)');
+                    $q->execute([$uid, $idFecha, $idEstadoSl, $sl, $coordLat, $coordLon, $coordDir]);
+                }
             }
+
             if ($rt !== '') {
-                $q = $db->prepare('UPDATE horario_rt_almuerzo SET hora_rt_almuerzo=? WHERE id_usuario=? AND id_fecha_registro=?');
-                $q->execute([$rt, $uid, $idFecha]);
+                $q = $db->prepare('SELECT 1 FROM horario_rt_almuerzo WHERE id_usuario=? AND id_fecha_registro=? LIMIT 1');
+                $q->execute([$uid, $idFecha]);
+                if ($q->fetch()) {
+                    $q = $db->prepare('UPDATE horario_rt_almuerzo SET hora_rt_almuerzo=? WHERE id_usuario=? AND id_fecha_registro=?');
+                    $q->execute([$rt, $uid, $idFecha]);
+                } else {
+                    if ($coordLat === null || $coordLon === null || $coordDir === null) {
+                        $this->redirectEditTimbres('No existe un registro de ingreso para copiar ubicación en regreso de almuerzo.', true);
+                        return;
+                    }
+                    $idEstadoRt = $this->ensureCatalog($db, 'estado_retorno_almuerzo', 'id_estado_retorno_almuerzo', 'detalle_retorno_almuerzo', 'Regreso de almuerzo');
+                    $q = $db->prepare('INSERT INTO horario_rt_almuerzo (id_usuario, id_fecha_registro, id_estado_retorno_almuerzo, hora_rt_almuerzo, latitud, longitud, direccion) VALUES (?, ?, ?, ?, ?, ?, ?)');
+                    $q->execute([$uid, $idFecha, $idEstadoRt, $rt, $coordLat, $coordLon, $coordDir]);
+                }
             }
+
             if ($salida !== '') {
-                $q = $db->prepare('UPDATE horario_salida SET hora_salida=? WHERE id_usuario=? AND id_fecha_registro=?');
-                $q->execute([$salida, $uid, $idFecha]);
-                // Recalcular estado_salida (Fin de jornada / Salida anticipada) contra hora_salida_personal
+                // ¿Existe salida laboral?
+                $q = $db->prepare('SELECT 1 FROM horario_salida WHERE id_usuario=? AND id_fecha_registro=? LIMIT 1');
+                $q->execute([$uid, $idFecha]);
+                $existsSalida = (bool)$q->fetch();
+
+                if ($existsSalida) {
+                    $q = $db->prepare('UPDATE horario_salida SET hora_salida=? WHERE id_usuario=? AND id_fecha_registro=?');
+                    $q->execute([$salida, $uid, $idFecha]);
+                } else {
+                    if ($coordLat === null || $coordLon === null || $coordDir === null) {
+                        $this->redirectEditTimbres('No existe un registro de ingreso para copiar ubicación en salida laboral.', true);
+                        return;
+                    }
+                    // Calcular estado de salida contra horario programado
+                    $hp = $db->prepare('SELECT hora_salida_personal FROM horario_salida_personal WHERE id_usuario=? LIMIT 1');
+                    $hp->execute([$uid]);
+                    $progOut = $hp->fetchColumn();
+                    $idEstado = null;
+                    if ($progOut) {
+                        $dtProg = new \DateTime($fecha.' '.$progOut);
+                        $dtOut  = new \DateTime($fecha.' '.$salida);
+                        $det = ($dtOut >= $dtProg) ? 'Fin de jornada laboral' : 'Salida anticipada';
+                        $idEstado = $this->ensureCatalog($db, 'estado_salida', 'id_estado_salida', 'detalle_salida', $det);
+                    }
+                    $q = $db->prepare('INSERT INTO horario_salida (id_usuario, id_fecha_registro, id_estado_salida, hora_salida, latitud, longitud, direccion) VALUES (?, ?, ?, ?, ?, ?, ?)');
+                    $q->execute([$uid, $idFecha, $idEstado, $salida, $coordLat, $coordLon, $coordDir]);
+                }
+
+                // Recalcular estado_salida (Fin de jornada / Salida anticipada) contra hora_salida_personal también para el caso UPDATE
                 $hp = $db->prepare('SELECT hora_salida_personal FROM horario_salida_personal WHERE id_usuario=? LIMIT 1');
                 $hp->execute([$uid]);
                 $progOut = $hp->fetchColumn();

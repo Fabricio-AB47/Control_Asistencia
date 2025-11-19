@@ -8,8 +8,8 @@ $mod  = $module ?? 'ti';
     <?php if ($mod !== 'admin'): ?>
       <p>Accesos rápidos del módulo.</p>
       <div class="buttons">
-        <a class="btn" href="<?= $base ?>/public/index.php?r=control&mod=<?= htmlspecialchars($mod,ENT_QUOTES,'UTF-8') ?>">Registro de Control Horario</a>
-        <a class="btn" href="<?= $base ?>/public/index.php?r=reporte&mod=<?= htmlspecialchars($mod,ENT_QUOTES,'UTF-8') ?>">Reporte de Timbres</a>
+        <a class="btn" href="<?= $base ?>/public/index.php?r=control&mod=<?= htmlspecialchars($mod,ENT_QUOTES,'UTF-8') ?>">🕒 Registro de Control Horario</a>
+        <a class="btn" href="<?= $base ?>/public/index.php?r=reporte&mod=<?= htmlspecialchars($mod,ENT_QUOTES,'UTF-8') ?>">📄 Reporte de Timbres</a>
       </div>
     <?php else: ?>
       <p>Bienvenido al Panel de Administración. Usa el menú superior para navegar (Roles, Usuarios, Horarios y Reporte General).</p>

@@ -25,7 +25,7 @@ main.main-control {
 
     background: v.$bg_card;
     border: 1px solid v.$border_soft;
-    border-radius: 12px;
+    border-radius: 24px; /* esquinas más redondeadas del panel */
     box-shadow: v.$shadow_soft;
     padding: 1.8rem 1.6rem;
 

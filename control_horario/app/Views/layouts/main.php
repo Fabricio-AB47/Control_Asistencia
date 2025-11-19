@@ -18,7 +18,13 @@ $base = function_exists('appBasePath') ? appBasePath() : '';
 <body>
 
 <header class="header">
-  <h1 class="header__welcome">Bienvenido, <?= htmlspecialchars(trim(($nombre ?? 'Usuario').' '.($apellido ?? '')), ENT_QUOTES, 'UTF-8') ?></h1>
+  <?php
+    // Siempre mostrar primer nombre y primer apellido si existen en la sesión
+    $fn = $_SESSION['primer_nombre']  ?? ($_SESSION['nombre']   ?? ($nombre   ?? 'Usuario'));
+    $ln = $_SESSION['primer_apellido'] ?? ($_SESSION['apellido'] ?? ($apellido ?? ''));
+    $displayName = trim($fn . ' ' . $ln);
+  ?>
+  <h1 class="header__welcome">Bienvenido, <?= htmlspecialchars($displayName, ENT_QUOTES, 'UTF-8') ?></h1>
   <div class="header__brand">
     <img src="<?= $base ?>/src/img/intec.png" alt="Logo Intec" class="logo">
   </div>

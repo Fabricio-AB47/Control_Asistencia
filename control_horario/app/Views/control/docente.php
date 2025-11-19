@@ -9,10 +9,16 @@ $base = $base ?? (function_exists('appBasePath') ? appBasePath() : '');
     <p>Hasta 3 timbradas de ingreso y 3 de fin por día. Mínimo 10 minutos entre timbres del mismo tipo.</p>
     <div class="buttons">
       <form id="form-doc-ingreso" method="post">
-        <button type="submit" class="btn-ingreso" id="btn-doc-ingreso">Ingreso Docente</button>
+        <button type="submit" class="btn-ingreso" id="btn-doc-ingreso">
+          <span class="btn-icon">🕒</span>
+          <span>Ingreso Docente</span>
+        </button>
       </form>
       <form id="form-doc-fin" method="post">
-        <button type="submit" class="btn-salida-laboral" id="btn-doc-fin">Fin Docente</button>
+        <button type="submit" class="btn-salida-laboral" id="btn-doc-fin">
+          <span class="btn-icon">🏁</span>
+          <span>Fin Docente</span>
+        </button>
       </form>
     </div>
     <div id="geo-msg" style="margin-top:10px;color:#444;"></div>

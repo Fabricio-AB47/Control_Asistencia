@@ -27,9 +27,9 @@ if (!headers_sent()) {
     header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
     header('Pragma: no-cache');
     header('Expires: 0');
-    // CSP: intentar evitar 'unsafe-inline' para scripts; mantener temporalmente style inline
-    // Recomendado: migrar scripts inline a archivos .js y usar nonces/hashes para CSP.
-    $csp = "default-src 'self'; script-src 'self' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https://nominatim.openstreetmap.org; frame-src https://www.google.com; frame-ancestors 'none'";
+    // CSP: se permite 'unsafe-inline' temporalmente para scripts porque la app usa muchos <script> inline.
+    // Ideal a futuro: mover scripts a archivos externos y usar nonces/hashes en lugar de 'unsafe-inline'.
+    $csp = "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https://nominatim.openstreetmap.org; frame-src https://www.google.com; frame-ancestors 'none'";
     header("Content-Security-Policy: $csp");
 
     // Añadir HSTS si la conexión es HTTPS
