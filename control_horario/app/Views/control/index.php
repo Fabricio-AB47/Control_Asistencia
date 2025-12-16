@@ -3,15 +3,20 @@
 $mod = $module ?? 'ti';
 ?>
 
+<style nonce="<?= htmlspecialchars($cspNonce ?? '', ENT_QUOTES, 'UTF-8'); ?>">
+  .ctrl-buttons { display:flex; flex-direction:column; gap:12px; }
+  .ctrl-geo-msg { margin-top:10px; color:#444; }
+</style>
+
 <main class="main-control">
   <div class="container">
     <h3>Registro de Control Horario</h3>
     <p>Por favor, selecciona la acción que deseas realizar:</p>
-    <div class="buttons">
+    <div class="buttons ctrl-buttons">
       <!-- Botón para registrar ingreso -->
       <form id="form-ingreso" method="post">
         <button type="submit" class="btn-ingreso" id="btn-ingreso">
-          <span class="btn-icon">🕒</span>
+          <span class="btn-icon">🟢</span>
           <span>Registrar Ingreso</span>
         </button>
       </form>
@@ -19,7 +24,7 @@ $mod = $module ?? 'ti';
       <!-- Botón para registrar salida de almuerzo -->
       <form id="form-salida-almuerzo" method="post">
         <button type="submit" class="btn-salida-almuerzo" id="btn-salida-almuerzo">
-          <span class="btn-icon">🍽️</span>
+          <span class="btn-icon">🍽️⬅️</span>
           <span>Salida al Almuerzo</span>
         </button>
       </form>
@@ -27,7 +32,7 @@ $mod = $module ?? 'ti';
       <!-- Botón para registrar regreso del almuerzo -->
       <form id="form-regreso-almuerzo" method="post">
         <button type="submit" class="btn-regreso-almuerzo" id="btn-regreso-almuerzo">
-          <span class="btn-icon">↩️</span>
+          <span class="btn-icon">🍽️➡️</span>
           <span>Regreso del Almuerzo</span>
         </button>
       </form>
@@ -35,13 +40,13 @@ $mod = $module ?? 'ti';
       <!-- Botón para registrar salida laboral -->
       <form id="form-salida-laboral" method="post">
         <button type="submit" class="btn-salida-laboral" id="btn-salida-laboral">
-          <span class="btn-icon">🏁</span>
+          <span class="btn-icon">🚪</span>
           <span>Salida Laboral</span>
         </button>
       </form>
     </div>
 
-    <div id="geo-msg" style="margin-top:10px;color:#444;"></div>
+    <div id="geo-msg" class="ctrl-geo-msg"></div>
   </div>
 </main>
 
@@ -56,7 +61,7 @@ $mod = $module ?? 'ti';
   </div>
 </div>
 
-<script>
+<script nonce="<?= htmlspecialchars($cspNonce ?? '', ENT_QUOTES, 'UTF-8'); ?>">
 (function(){
   const MSG   = document.getElementById('geo-msg');
   const CSRF  = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
@@ -129,14 +134,14 @@ $mod = $module ?? 'ti';
       const payload = await res.text();
       const messageOnly = (payload || '').replace(/<script[\s\S]*?<\/script>/gi,'').trim();
       if (!res.ok) {
-        openModal('? Error del servidor (' + res.status + '): ' + messageOnly);
+        openModal('⚠️ Error del servidor (' + res.status + '): ' + messageOnly);
         showMsg('Ocurrió un error al registrar. Intenta nuevamente.');
         return;
       }
-      openModal(messageOnly || '? Registro realizado correctamente.', REDIR);
+      openModal(messageOnly || '✅ Registro realizado correctamente.', REDIR);
     } catch(e){
       showMsg(e.message);
-      openModal('? ' + e.message);
+      openModal('⚠️ ' + e.message);
     }
   }
 
@@ -145,10 +150,20 @@ $mod = $module ?? 'ti';
   document.getElementById('form-regreso-almuerzo').addEventListener('submit', function(ev){ ev.preventDefault(); enviarRegistro(ENDPOINTS.regresoAlmuerzo, 'Regreso del almuerzo'); });
   document.getElementById('form-salida-laboral').addEventListener('submit', function(ev){ ev.preventDefault(); enviarRegistro(ENDPOINTS.salidaLaboral, 'Salida laboral'); });
 
-  // Inactividad: solo redirige
+  // Inactividad: cierra sesión segura
   let tiempoLimite = 900000; // 15 minutos
   let temporizador = setTimeout(cerrarSesionPorInactividad, tiempoLimite);
-  function cerrarSesionPorInactividad() { window.location.href = '<?= $base ?>/logout.php?logout=1'; }
+  async function cerrarSesionPorInactividad() {
+    try {
+      await fetch('<?= $base ?>/logout.php', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'Content-Type':'application/x-www-form-urlencoded' },
+        body: 'csrf_token=' + encodeURIComponent(CSRF)
+      });
+    } catch(_){}
+    window.location.href = '<?= $base ?>/index.php?error=1';
+  }
   function reiniciarTemporizador() { clearTimeout(temporizador); temporizador = setTimeout(cerrarSesionPorInactividad, tiempoLimite); }
   ['mousemove','keydown','click','scroll','touchstart'].forEach(evt=>{ document.addEventListener(evt, reiniciarTemporizador, {passive:true}); });
 

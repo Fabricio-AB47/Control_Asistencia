@@ -36,6 +36,28 @@ class RegistrarController
         $uid = (int)$_SESSION['id_usuario'];
         $input = \app_json_input();
 
+        // Normaliza la acción para aceptar etiquetas del front (por si falta en la query)
+        $actionRaw = $action ?: ($input['accion'] ?? '');
+        $actionRaw = is_string($actionRaw) ? trim($actionRaw) : '';
+        $map = [
+            'ingreso'                => 'ingreso',
+            'registrar ingreso'      => 'ingreso',
+            'entrada'                => 'ingreso',
+            'salida al almuerzo'     => 'salida_almuerzo',
+            'salida_almuerzo'        => 'salida_almuerzo',
+            'regreso del almuerzo'   => 'regreso_almuerzo',
+            'regreso_almuerzo'       => 'regreso_almuerzo',
+            'salida laboral'         => 'salida_laboral',
+            'salida_laboral'         => 'salida_laboral',
+            'docente_ingreso'        => 'docente_ingreso',
+            'ingreso docente'        => 'docente_ingreso',
+            'docente_fin'            => 'docente_fin',
+            'fin docente'            => 'docente_fin',
+        ];
+        $actionKey = strtolower(str_replace(['á','é','í','ó','ú','ñ'], ['a','e','i','o','u','n'], $actionRaw));
+        $action = $map[$actionKey] ?? $actionKey;
+        if ($action === '') { http_response_code(400); echo 'Acción requerida'; return; }
+
         try {
             $db = \conexion();
             $svc = new ControlService($db);

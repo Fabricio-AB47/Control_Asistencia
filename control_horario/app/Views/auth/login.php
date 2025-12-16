@@ -16,6 +16,7 @@
     <div class="login-container">
       <form method="POST" class="login-form">
         <h2 class="login-title">Iniciar sesión</h2>
+        <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['token'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
         <div class="form-group">
           <label for="email" class="form-label">Ingrese el correo</label>
           <input type="email" id="email" name="usuario" class="form-input" placeholder="Correo electrónico" required>
@@ -32,4 +33,3 @@
   </main>
 </body>
 </html>
-

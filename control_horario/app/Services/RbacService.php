@@ -21,8 +21,8 @@ class RbacService
         switch ($key) {
             case 'ADMIN':
             case 'ADMINISTRADOR':
-                // Admin no timbra: solo módulo 'admin' en la UI
-                return ['admin'];
+                // Admin puede acceder a todos los módulos (incluye timbrado)
+                return ['admin','ti','financiero','admisiones','academico','bienestar','docente','autoridades'];
             case 'AUTORIDADES':
                 return ['autoridades'];
             case 'TI':

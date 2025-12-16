@@ -1,6 +1,22 @@
 <?php
 // Layout base. Variables esperadas: $title, $content, $module, $nombre, $apellido, $menu
 $base = function_exists('appBasePath') ? appBasePath() : '';
+
+if (!function_exists('normalizeRoleName')) {
+    // Normaliza acentos para comparar roles sin problemas de encoding
+    function normalizeRoleName($name) {
+        $map = [
+            'á' => 'a', 'é' => 'e', 'í' => 'i', 'ó' => 'o', 'ú' => 'u', 'ñ' => 'n',
+            'Á' => 'A', 'É' => 'E', 'Í' => 'I', 'Ó' => 'O', 'Ú' => 'U', 'Ñ' => 'N',
+        ];
+        $clean = strtr($name, $map);
+        $ascii = @iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $clean);
+        if ($ascii !== false) {
+            $clean = $ascii;
+        }
+        return strtoupper($clean);
+    }
+}
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -13,7 +29,7 @@ $base = function_exists('appBasePath') ? appBasePath() : '';
   <link rel="stylesheet" href="<?= $base ?>/build/css/app.css">
   <script src="<?= $base ?>/build/js/menu.js" defer></script>
   <title><?= htmlspecialchars($title ?? 'App', ENT_QUOTES, 'UTF-8') ?></title>
-  <style> .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;} </style>
+  <style nonce="<?= htmlspecialchars($cspNonce ?? '', ENT_QUOTES, 'UTF-8'); ?>"> .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;} .logout-inline{display:inline;} </style>
 </head>
 <body>
 
@@ -42,12 +58,7 @@ $base = function_exists('appBasePath') ? appBasePath() : '';
     <?php
       // Enlaces especiales para ADMIN dentro del menú
       $rolMenu = $_SESSION['tipo'] ?? '';
-      // Normaliza acentos del rol para detectar ADMIN/ADMINISTRADOR
-      $rolNorm = strtr($rolMenu, [
-        'á'=>'a','é'=>'e','í'=>'i','ó'=>'o','ú'=>'u','ñ'=>'n',
-        'Á'=>'A','É'=>'E','Í'=>'I','Ó'=>'O','Ú'=>'U','Ñ'=>'N'
-      ]);
-      $rolNorm = strtoupper($rolNorm);
+      $rolNorm = normalizeRoleName($rolMenu);
       $isAdmin = ($rolNorm === 'ADMIN' || $rolNorm === 'ADMINISTRADOR');
       $baseUrl = (function_exists('appBasePath')?appBasePath():'');
     ?>
@@ -63,7 +74,10 @@ $base = function_exists('appBasePath') ? appBasePath() : '';
       <?php endif; ?>
     <?php endif; ?>
 
-    <a class="btn btn--danger" href="<?= $base ?>/logout.php?logout=1">Cerrar Sesión</a>
+    <form method="POST" action="<?= $base ?>/logout.php" class="logout-inline">
+      <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['token'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
+      <button type="submit" class="btn btn--danger">Cerrar Sesión</button>
+    </form>
   </nav>
 </header>
 

@@ -12,7 +12,11 @@ class BaseController
             return;
         }
 
+        // Nonce CSP para vistas y layout
+        $cspNonce = \App\Security\SecurityHeaders::getCSPNonce();
+
         // Extrae variables para la vista
+        $params['cspNonce'] = $cspNonce;
         extract($params, EXTR_SKIP);
 
         // Renderiza contenido

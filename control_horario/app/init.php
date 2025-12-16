@@ -19,28 +19,12 @@ spl_autoload_register(function ($class) {
 // Cargar helpers de Core (funciones globales appBasePath, conexion, etc.)
 require_once __DIR__ . '/Controllers/Core.php';
 
-// ---- Seguridad HTTP global (cabeceras de protección básicas) ----
-if (!headers_sent()) {
-    header('X-Content-Type-Options: nosniff');
-    header('Referrer-Policy: strict-origin-when-cross-origin');
-    // Evita cacheo en páginas autenticadas de manera general
-    header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
-    header('Pragma: no-cache');
-    header('Expires: 0');
-    // CSP: se permite 'unsafe-inline' temporalmente para scripts porque la app usa muchos <script> inline.
-    // Ideal a futuro: mover scripts a archivos externos y usar nonces/hashes en lugar de 'unsafe-inline'.
-    $csp = "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https://nominatim.openstreetmap.org; frame-src https://www.google.com; frame-ancestors 'none'";
-    header("Content-Security-Policy: $csp");
+// ---- Seguridad HTTP global (cabeceras mejoradas) ----
+use App\Security\SecurityHeaders;
+$https = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off');
+SecurityHeaders::setHeaders($https);
 
-    // Añadir HSTS si la conexión es HTTPS
-    $fileEnv = function_exists('loadDotEnv') ? loadDotEnv() : [];
-    $https = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off');
-    if ($https) {
-        header('Strict-Transport-Security: max-age=63072000; includeSubDomains; preload');
-    }
-}
-
-// Lightweight helpers
+// Helpers
 if (!function_exists('app_json_input')) {
     function app_json_input(): array {
         $raw = file_get_contents('php://input');
@@ -89,18 +73,18 @@ if (!function_exists('app_session_guard')) {
 // ---- Sesión endurecida y helper para arrancarla con parámetros seguros ----
 if (!function_exists('app_boot_session')) {
     function app_boot_session(): void {
-        // Parámetros de cookie de sesión
         $fileEnv = function_exists('loadDotEnv') ? loadDotEnv() : [];
         $forceSecure = (getEnvVar('FORCE_SECURE_COOKIES', $fileEnv, 'force_secure_cookies') ?? '0') === '1';
         $https = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off');
         $secure = $https || $forceSecure;
+        $sameSite = $secure ? 'Strict' : 'Lax';
         $params = [
             'lifetime' => 0,
             'path'     => '/',
             'domain'   => '',
             'secure'   => $secure,
             'httponly' => true,
-            'samesite' => 'Lax',
+            'samesite' => $sameSite,
         ];
         if (session_status() !== PHP_SESSION_ACTIVE) {
             if (PHP_VERSION_ID >= 70300) session_set_cookie_params($params);
@@ -113,7 +97,7 @@ if (!function_exists('app_boot_session')) {
 // ---- Rate limiting simple por sesión ----
 if (!function_exists('app_rate_limit')) {
     function app_rate_limit(string $key, int $limit, int $windowSec): bool {
-        if (!isset($_SESSION)) return true; // si no hay sesión, permitir (o arrancarla antes)
+        if (!isset($_SESSION)) return true;
         $now = time();
         $_SESSION['rate'] = $_SESSION['rate'] ?? [];
         $_SESSION['rate'][$key] = array_filter($_SESSION['rate'][$key] ?? [], function($ts) use($now,$windowSec){ return ($now - $ts) < $windowSec; });

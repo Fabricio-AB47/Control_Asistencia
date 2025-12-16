@@ -2,9 +2,21 @@
 declare(strict_types=1);
 require_once __DIR__.'/app/init.php';
 
-// Inicia la sesión sólo si no está activa
+// Inicia la sesión solo si no está activa
 if (session_status() !== PHP_SESSION_ACTIVE) {
     session_start();
+}
+
+// Permitir cierre solo por POST + CSRF
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    http_response_code(405);
+    echo 'Método no permitido';
+    exit;
+}
+if (!function_exists('app_csrf_valid') || !app_csrf_valid()) {
+    http_response_code(403);
+    echo 'CSRF inválido';
+    exit;
 }
 
 // Guarda los params actuales de la cookie de sesión ANTES de destruir
@@ -27,7 +39,6 @@ if (ini_get('session.use_cookies')) {
     $samesite = $params['samesite'] ?? 'Lax'; // Lax por defecto
 
     if (defined('PHP_VERSION_ID') && PHP_VERSION_ID >= 70300) {
-        // PHP 7.3+ — array de opciones soportado
         setcookie($sessionName, '', [
             'expires'  => time() - 42000,
             'path'     => $path,
@@ -37,7 +48,6 @@ if (ini_get('session.use_cookies')) {
             'samesite' => $samesite,
         ]);
     } else {
-        // PHP < 7.3 — hack de SameSite en el path
         $pathWithSamesite = $path . '; samesite=' . $samesite;
         setcookie($sessionName, '', time() - 42000, $pathWithSamesite, $domain, $secure, $httponly);
     }
@@ -52,3 +62,4 @@ header('Expires: 0');
 $REDIRECT_PATH = appBasePath() . '/index.php';
 header('Location: ' . $REDIRECT_PATH);
 exit;
+

@@ -85,7 +85,7 @@ class ReporteService
     public function timbresAll(string $desde, string $hasta, ?string $nameFilter = null, ?string $rolFilter = null): array
     {
         $sql = "
-        SELECT
+        SELECT DISTINCT
             fr.fecha_ingreso                                     AS fecha,
             u.id_usuario,
             CONCAT_WS(' ', u.primer_nombre, u.primer_apellido)   AS usuario,
@@ -112,8 +112,8 @@ class ReporteService
         FROM fecha_registro fr
         INNER JOIN usuario u ON u.id_usuario = fr.id_usuario
         LEFT JOIN tipo_usuario tu ON tu.id_tp_user = u.id_tp_user
-        LEFT JOIN horario_entrada_personal he ON he.id_usuario = u.id_usuario
-        LEFT JOIN horario_salida_personal  hs ON hs.id_usuario = u.id_usuario
+        LEFT JOIN horario_entrada_personal he ON he.id_usuario = u.id_usuario AND he.id_tp_user = u.id_tp_user
+        LEFT JOIN horario_salida_personal  hs ON hs.id_usuario = u.id_usuario AND hs.id_tp_user = u.id_tp_user
 
         LEFT JOIN horario_ingreso hi
                ON hi.id_usuario = fr.id_usuario AND hi.id_fecha_registro = fr.id_fecha_registro

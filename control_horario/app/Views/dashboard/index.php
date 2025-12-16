@@ -2,6 +2,13 @@
 $base = $base ?? (function_exists('appBasePath') ? appBasePath() : '');
 $mod  = $module ?? 'ti';
 ?>
+<style nonce="<?= htmlspecialchars($cspNonce ?? '', ENT_QUOTES, 'UTF-8'); ?>">
+  .dash-section { margin-top:1.5rem; text-align:center; }
+  .dash-title { margin:.5rem 0 1rem; }
+  .dash-form { display:flex; gap:.75rem; justify-content:center; flex-wrap:wrap; }
+  .dash-form .filter__field { text-align:left; }
+  .dash-chart-wrap { display:flex; justify-content:center; align-items:center; margin-top:.5rem; }
+</style>
 <main class="main-control">
   <div class="container">
     <h3>Panel de <?= htmlspecialchars(ucfirst($mod), ENT_QUOTES, 'UTF-8') ?></h3>
@@ -13,15 +20,15 @@ $mod  = $module ?? 'ti';
       </div>
     <?php else: ?>
       <p>Bienvenido al Panel de Administración. Usa el menú superior para navegar (Roles, Usuarios, Horarios y Reporte General).</p>
-      <section style="margin-top:1.5rem; text-align:center;">
-        <h4 style="margin:.5rem 0 1rem;">Distribución de llegadas (a tiempo/temprano vs atrasos)</h4>
+      <section class="dash-section">
+        <h4 class="dash-title">Distribución de llegadas (a tiempo/temprano vs atrasos)</h4>
         <?php $hoy=(new DateTime('now', new DateTimeZone('America/Guayaquil')))->format('Y-m-d'); $ini=(new DateTime('first day of this month'))->format('Y-m-d'); ?>
-        <form id="form-stats" class="filter chart-actions" method="get" onsubmit="return false;">
-          <label class="filter__field" style="text-align:left;">Desde <input type="date" id="f-desde" value="<?= htmlspecialchars($ini,ENT_QUOTES,'UTF-8') ?>"></label>
-          <label class="filter__field" style="text-align:left;">Hasta <input type="date" id="f-hasta" value="<?= htmlspecialchars($hoy,ENT_QUOTES,'UTF-8') ?>"></label>
+        <form id="form-stats" class="filter chart-actions dash-form" method="get" onsubmit="return false;">
+          <label class="filter__field">Desde <input type="date" id="f-desde" value="<?= htmlspecialchars($ini,ENT_QUOTES,'UTF-8') ?>"></label>
+          <label class="filter__field">Hasta <input type="date" id="f-hasta" value="<?= htmlspecialchars($hoy,ENT_QUOTES,'UTF-8') ?>"></label>
           <button class="btn btn--primary" id="btn-load" type="button">Actualizar</button>
         </form>
-        <div style="display:flex;justify-content:center;align-items:center;margin-top:.5rem;">
+        <div class="dash-chart-wrap">
           <div class="chart-card">
             <canvas id="chart-arrivals"></canvas>
           </div>
@@ -34,7 +41,7 @@ $mod  = $module ?? 'ti';
           </div>
         </div>
         <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-        <script>
+        <script nonce="<?= htmlspecialchars($cspNonce ?? '', ENT_QUOTES, 'UTF-8'); ?>">
           (function(){
             const BASE = <?= json_encode($base) ?>;
             const ctx = document.getElementById('chart-arrivals').getContext('2d');

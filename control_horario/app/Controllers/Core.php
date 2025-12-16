@@ -56,6 +56,24 @@ if (!function_exists('h')) {
     }
 }
 
+/**
+ * Función segura para escapar atributos HTML5
+ */
+if (!function_exists('attr')) {
+    function attr($s): string {
+        return htmlspecialchars($s ?? '', ENT_QUOTES | ENT_HTML5, 'UTF-8');
+    }
+}
+
+/**
+ * Función segura para escapar JSON
+ */
+if (!function_exists('json_safe')) {
+    function json_safe($data): string {
+        return htmlspecialchars(json_encode($data), ENT_QUOTES, 'UTF-8');
+    }
+}
+
 function conexion(): \PDO {
     $fileEnv = loadDotEnv();
     $host = getEnvVar('DB_HOST', $fileEnv, 'db_host');
@@ -87,4 +105,49 @@ function conexion(): \PDO {
         }
         throw new \RuntimeException('Error al conectar a la base de datos. Verifica credenciales en .env');
     }
+}
+
+/**
+ * Obtiene el cliente IP de forma segura (OWASP A01:2021)
+ */
+function getClientIP(): string {
+    if (!empty($_SERVER['HTTP_CF_CONNECTING_IP'])) {
+        return filter_var($_SERVER['HTTP_CF_CONNECTING_IP'], FILTER_VALIDATE_IP) ?: 'unknown';
+    }
+    if (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
+        $ips = array_map('trim', explode(',', $_SERVER['HTTP_X_FORWARDED_FOR']));
+        foreach ($ips as $ip) {
+            if (filter_var($ip, FILTER_VALIDATE_IP)) {
+                return $ip;
+            }
+        }
+    }
+    return filter_var($_SERVER['REMOTE_ADDR'] ?? 'unknown', FILTER_VALIDATE_IP) ?: 'unknown';
+}
+
+/**
+ * Valida que una solicitud sea del dominio (OWASP A01:2021 - CORS)
+ */
+function validateOrigin(): bool {
+    $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
+    if (empty($origin)) {
+        return true; // Navegadores no CORS omiten origen en algunas solicitudes
+    }
+    $allowedOrigins = [
+        preg_replace('|^https?://|', '', $_SERVER['HTTP_HOST'] ?? ''),
+    ];
+    foreach ($allowedOrigins as $allowed) {
+        if (preg_match('/' . preg_quote($allowed, '/') . '$/', $origin)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+/**
+ * Valida que la solicitud sea JSON válido
+ */
+function validateJsonRequest(): bool {
+    $contentType = $_SERVER['CONTENT_TYPE'] ?? '';
+    return strpos($contentType, 'application/json') !== false;
 }

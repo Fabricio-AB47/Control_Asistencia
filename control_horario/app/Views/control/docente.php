@@ -3,11 +3,16 @@
 $mod = $module ?? 'academico';
 $base = $base ?? (function_exists('appBasePath') ? appBasePath() : '');
 ?>
+<style nonce="<?= htmlspecialchars($cspNonce ?? '', ENT_QUOTES, 'UTF-8'); ?>">
+  .doc-buttons { display:flex; flex-direction:column; gap:12px; }
+  .doc-geo-msg { margin-top:10px; color:#444; }
+</style>
+
 <main class="main-control">
   <div class="container">
     <h3>Registro Docente</h3>
     <p>Hasta 3 timbradas de ingreso y 3 de fin por día. Mínimo 10 minutos entre timbres del mismo tipo.</p>
-    <div class="buttons">
+    <div class="buttons doc-buttons">
       <form id="form-doc-ingreso" method="post">
         <button type="submit" class="btn-ingreso" id="btn-doc-ingreso">
           <span class="btn-icon">🕒</span>
@@ -21,7 +26,7 @@ $base = $base ?? (function_exists('appBasePath') ? appBasePath() : '');
         </button>
       </form>
     </div>
-    <div id="geo-msg" style="margin-top:10px;color:#444;"></div>
+    <div id="geo-msg" class="doc-geo-msg"></div>
   </div>
 </main>
 
@@ -35,7 +40,7 @@ $base = $base ?? (function_exists('appBasePath') ? appBasePath() : '');
   </div>
 </div>
 
-<script>
+<script nonce="<?= htmlspecialchars($cspNonce ?? '', ENT_QUOTES, 'UTF-8'); ?>">
 (function(){
   const MSG   = document.getElementById('geo-msg');
   const CSRF  = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
