@@ -5,7 +5,7 @@
     <?php if (!empty($msg)): ?><div class="registro-alerta exito"><?= htmlspecialchars($msg,ENT_QUOTES,'UTF-8') ?></div><?php endif; ?>
     <?php if (!empty($err)): ?><div class="registro-alerta error"><?= htmlspecialchars($err,ENT_QUOTES,'UTF-8') ?></div><?php endif; ?>
 
-    <form method="get" action="<?= $base ?>/public/index.php" class="registro-formulario" style="margin-bottom:1rem;">
+    <form method="get" action="<?= $base ?>/index.php" class="registro-formulario" style="margin-bottom:1rem;">
       <input type="hidden" name="r" value="admin">
       <input type="hidden" name="action" value="schedules">
       <div class="registro-campo">
@@ -19,7 +19,7 @@
       </div>
     </form>
 
-    <form method="post" action="<?= $base ?>/public/index.php?r=admin&action=schedules_save" class="registro-formulario" style="margin-bottom:1rem;">
+    <form method="post" action="<?= $base ?>/index.php?r=admin&action=schedules_save" class="registro-formulario" style="margin-bottom:1rem;">
       <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['token'] ?? '',ENT_QUOTES,'UTF-8') ?>">
       <input type="hidden" name="uid" value="<?= (int)($uidSel ?? 0) ?>">
       <div class="registro-campo">
@@ -34,7 +34,7 @@
       </div>
       <div class="registro-botones" style="grid-column:1 / -1;">
         <button type="submit" class="registro-btn">Guardar</button>
-        <a class="registro-btn volver" href="<?= $base ?>/public/index.php?r=dashboard&mod=admin">Volver</a>
+        <a class="registro-btn volver" href="<?= $base ?>/index.php?r=dashboard&mod=admin">Volver</a>
       </div>
     </form>
 

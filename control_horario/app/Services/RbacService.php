@@ -62,7 +62,8 @@ class RbacService
     public function dashboardForModule(string $module): string
     {
         $base = function_exists('appBasePath') ? appBasePath() : '';
-        return $base . '/public/index.php?r=dashboard&mod=' . $module;
+        $routerBase = ($base === '/') ? '' : rtrim($base, '/');
+        return $routerBase . '/index.php?r=dashboard&mod=' . $module;
     }
 
     public function menuForRole(string $role, string $currentModule = ''): array
@@ -80,8 +81,5 @@ class RbacService
         return $menu;
     }
 }
-
-
-
 
 

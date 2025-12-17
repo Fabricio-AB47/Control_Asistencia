@@ -51,6 +51,7 @@ function linkMap($lat,$lon,$label='Mapa'){
           <th>Jornada</th>
           <th>Almuerzo</th>
           <th>Horas efectivas</th>
+          <th>Horas extra (&gt; 8h)</th>
           <th>Tardanza</th>
           <th>Tiempo adicional</th>
         </tr>
@@ -68,6 +69,7 @@ function linkMap($lat,$lon,$label='Mapa'){
             $secJornada  = ($dtIn && $dtOut) ? secs($dtIn,$dtOut) : 0;
             $secAlmuerzo = ($dtSl && $dtRt)  ? max(0, secs($dtSl,$dtRt)) : 0;
             $secEfectiva = max(0, $secJornada - $secAlmuerzo);
+            $secExtra8h  = max(0, $secEfectiva - 28800);
             $tardanzaMin = 0; $extraMin = 0;
             if (!empty($r['hora_prog_in']) && $dtIn) { $dtProgIn=new DateTime($fecha.' '.$r['hora_prog_in']); $dif=secs($dtProgIn,$dtIn); $tardanzaMin=max(0,intdiv($dif,60)-10); }
             if (!empty($r['hora_prog_out']) && $dtOut){ $dtProgOut=new DateTime($fecha.' '.$r['hora_prog_out']); $dif=secs($dtProgOut,$dtOut); $extraMin = $dif>0 ? intdiv($dif,60) : 0; }
@@ -99,6 +101,7 @@ function linkMap($lat,$lon,$label='Mapa'){
             <td><?= hhmmss($secJornada) ?></td>
             <td><?= hhmmss($secAlmuerzo) ?></td>
             <td><?= hhmmss($secEfectiva) ?></td>
+            <td><?= hhmmss($secExtra8h) ?></td>
             <td><?= $tardanzaMin>0 ? "<span class='chip chip--warn'>".$tardanzaMin." min</span>" : '—' ?></td>
             <td><?= $extraMin>0 ? "<span class='chip chip--info'>".$extraMin." min</span>" : '—' ?></td>
           </tr>

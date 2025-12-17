@@ -1,4 +1,10 @@
 <?php
+// Prevent double bootstrap when index.php and public/index.php include this file
+if (defined('APP_BOOTSTRAPPED')) {
+    return;
+}
+define('APP_BOOTSTRAPPED', true);
+
 // Minimal bootstrap and autoloader for MVC-style organization
 // Keeps compatibility with existing codebase. No external dependencies.
 
@@ -53,18 +59,33 @@ if (!function_exists('app_ensure_csrf_token')) {
     }
 }
 
+if (!function_exists('app_redirect_login')) {
+    /**
+     * Redirige al login/index respetando APP_BASE_PATH.
+     * Cuando la sesión expiró, marca un header para que el frontend pueda detectarlo.
+     */
+    function app_redirect_login(bool $expired = false): void {
+        $base = function_exists('appBasePath') ? appBasePath() : '';
+        $base = ($base === '/' || $base === '') ? '' : rtrim($base, '/');
+        $target = $base . '/index.php';
+        if ($expired && !headers_sent()) {
+            header('X-Session-Expired: 1');
+        }
+        header('Location: ' . $target);
+        exit();
+    }
+}
+
 if (!function_exists('app_session_guard')) {
     function app_session_guard(int $maxIdleSeconds = 900): void {
         if (!isset($_SESSION['id_usuario'])) {
-            header('Location: ' . (function_exists('appBasePath') ? appBasePath() : '') . '/index.php');
-            exit();
+            app_redirect_login();
         }
         $now = time();
         if (isset($_SESSION['ultimo_acceso']) && ($now - (int)$_SESSION['ultimo_acceso']) > $maxIdleSeconds) {
             session_unset();
             session_destroy();
-            header('Location: ' . (function_exists('appBasePath') ? appBasePath() : '') . '/index.php');
-            exit();
+            app_redirect_login(true);
         }
         $_SESSION['ultimo_acceso'] = $now;
     }

@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <link rel="stylesheet" href="build/css/app.css">
+  <?php $base = function_exists('appBasePath') ? appBasePath() : ''; $assetBase = ($base === '/') ? '' : rtrim($base,'/'); ?>
+  <link rel="stylesheet" href="<?= htmlspecialchars($assetBase . '/build/css/app.css', ENT_QUOTES, 'UTF-8') ?>">
   <title>Elige tu Rol</title>
 </head>
 <body>
@@ -27,29 +28,27 @@
 
       <?php if ($nombrePrincipal !== ''): ?>
         <h2 class="login-title"><?= htmlspecialchars($nombrePrincipal, ENT_QUOTES, 'UTF-8') ?></h2>
-        <p class="login-subtitle">¿Con qué perfil deseas ingresar?</p>
+        <p class="login-subtitle">&#191;Con qu&#233; perfil deseas ingresar?</p>
       <?php else: ?>
-        <h2 class="login-title">Elige con qué rol deseas continuar</h2>
+        <h2 class="login-title">Elige con qu&#233; rol deseas continuar</h2>
       <?php endif; ?>
 
       <div class="role-buttons">
         <?php if (!empty($adm)): $c = $adm[0]; ?>
-          <form method="post" class="role-buttons__form">
+          <form method="post" action="<?= htmlspecialchars($assetBase . '/index.php', ENT_QUOTES, 'UTF-8') ?>" class="role-buttons__form">
             <input type="hidden" name="select_user_id" value="<?= (int)$c['id_usuario'] ?>">
-            <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['token'] ?? '',ENT_QUOTES,'UTF-8') ?>">
             <button type="submit" class="role-buttons__btn">
-              <span class="role-buttons__icon">👔</span>
+              <span class="role-buttons__icon" aria-hidden="true">&#128188;</span>
               <span>Administrativo</span>
             </button>
           </form>
         <?php endif; ?>
 
         <?php if (!empty($doc)): $c = $doc[0]; ?>
-          <form method="post" class="role-buttons__form">
+          <form method="post" action="<?= htmlspecialchars($assetBase . '/index.php', ENT_QUOTES, 'UTF-8') ?>" class="role-buttons__form">
             <input type="hidden" name="select_user_id" value="<?= (int)$c['id_usuario'] ?>">
-            <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['token'] ?? '',ENT_QUOTES,'UTF-8') ?>">
             <button type="submit" class="role-buttons__btn role-buttons__btn--secondary">
-              <span class="role-buttons__icon">📚</span>
+              <span class="role-buttons__icon" aria-hidden="true">&#127979;</span>
               <span>Docente</span>
             </button>
           </form>

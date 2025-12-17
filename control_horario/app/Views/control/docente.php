@@ -47,8 +47,8 @@ $base = $base ?? (function_exists('appBasePath') ? appBasePath() : '');
   const MOD = <?= json_encode($mod) ?>;
   const BASE = <?= json_encode($base) ?>;
   const ENDPOINTS = {
-    docenteIngreso: `${BASE}/public/index.php?r=registrar&mod=${MOD}&action=docente_ingreso`,
-    docenteFin:     `${BASE}/public/index.php?r=registrar&mod=${MOD}&action=docente_fin`
+    docenteIngreso: `${BASE}/index.php?r=registrar&mod=${MOD}&action=docente_ingreso`,
+    docenteFin:     `${BASE}/index.php?r=registrar&mod=${MOD}&action=docente_fin`
   };
   const REDIR = <?= json_encode($redirect ?? ('../'+($mod||'academico')+'/dashboard.php')) ?>;
 
@@ -84,7 +84,18 @@ $base = $base ?? (function_exists('appBasePath') ? appBasePath() : '');
     try {
       const {lat, lon, addr} = await pedirCoordenadas();
       showMsg('Ubicación obtenida. Registrando...');
-      const res = await fetch(url, { method:'POST', credentials:'same-origin', headers:{ 'Content-Type':'application/json', 'X-CSRF-Token': CSRF }, body: JSON.stringify({ latitud: lat, longitud: lon, direccion: addr, accion: etiqueta }) });
+      const res = await fetch(url, {
+        method:'POST',
+        credentials:'same-origin',
+        headers:{ 'Content-Type':'application/json', 'X-CSRF-Token': CSRF },
+        body: JSON.stringify({ latitud: lat, longitud: lon, direccion: addr, accion: etiqueta })
+      });
+
+      if (res.redirected || res.status === 401 || res.headers.get('X-Session-Expired') === '1') {
+        window.location.href = res.url || `${BASE}/index.php`;
+        return;
+      }
+
       const payload = await res.text();
       const messageOnly = (payload || '').replace(/<script[\s\S]*?<\/script>/gi,'').trim();
       if (!res.ok) { openModal('Error ('+res.status+'): '+messageOnly); showMsg('Ocurrió un error.'); return; }
@@ -97,4 +108,3 @@ $base = $base ?? (function_exists('appBasePath') ? appBasePath() : '');
   const MODAL = document.getElementById('modal'); const MODAL_BODY = document.getElementById('modal-body'); const MODAL_OK = document.getElementById('modal-ok'); let modalRedirect = null; function openModal(text, redirect=null, autoAcceptMs=null){ const content = String(text ?? '').trim(); if (!content) { if (redirect) window.location.href = redirect; return; } modalRedirect = redirect; MODAL_BODY.textContent = content; MODAL.removeAttribute('hidden'); MODAL_OK.focus(); if (typeof autoAcceptMs === 'number' && autoAcceptMs > 0) { setTimeout(()=>{ if(!MODAL.hasAttribute('hidden')) closeModal(); }, autoAcceptMs); } } function closeModal(){ MODAL.setAttribute('hidden',''); const r = modalRedirect; modalRedirect = null; if (r) window.location.href = r; } MODAL_OK.addEventListener('click', closeModal); MODAL.addEventListener('click', (e)=>{ if(e.target===MODAL) closeModal(); }); document.addEventListener('keydown', (e)=>{ if(e.key==='Escape' && !MODAL.hasAttribute('hidden')) closeModal(); });
 })();
 </script>
-

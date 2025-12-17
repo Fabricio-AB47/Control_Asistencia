@@ -1,5 +1,6 @@
 <?php
 $base = $base ?? (function_exists('appBasePath') ? appBasePath() : '');
+$baseUrl = ($base === '/' || $base === '') ? '' : rtrim($base, '/');
 $mod  = $module ?? 'ti';
 ?>
 <style nonce="<?= htmlspecialchars($cspNonce ?? '', ENT_QUOTES, 'UTF-8'); ?>">
@@ -15,8 +16,8 @@ $mod  = $module ?? 'ti';
     <?php if ($mod !== 'admin'): ?>
       <p>Accesos rápidos del módulo.</p>
       <div class="buttons">
-        <a class="btn" href="<?= $base ?>/public/index.php?r=control&mod=<?= htmlspecialchars($mod,ENT_QUOTES,'UTF-8') ?>">🕒 Registro de Control Horario</a>
-        <a class="btn" href="<?= $base ?>/public/index.php?r=reporte&mod=<?= htmlspecialchars($mod,ENT_QUOTES,'UTF-8') ?>">📄 Reporte de Timbres</a>
+        <a class="btn" href="<?= $baseUrl ?>/index.php?r=control&mod=<?= htmlspecialchars($mod,ENT_QUOTES,'UTF-8') ?>">🕒 Registro de Control Horario</a>
+        <a class="btn" href="<?= $baseUrl ?>/index.php?r=reporte&mod=<?= htmlspecialchars($mod,ENT_QUOTES,'UTF-8') ?>">📄 Reporte de Timbres</a>
       </div>
     <?php else: ?>
       <p>Bienvenido al Panel de Administración. Usa el menú superior para navegar (Roles, Usuarios, Horarios y Reporte General).</p>
@@ -43,7 +44,7 @@ $mod  = $module ?? 'ti';
         <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
         <script nonce="<?= htmlspecialchars($cspNonce ?? '', ENT_QUOTES, 'UTF-8'); ?>">
           (function(){
-            const BASE = <?= json_encode($base) ?>;
+            const BASE = <?= json_encode($baseUrl) ?>;
             const ctx = document.getElementById('chart-arrivals').getContext('2d');
             let chart = null;
             function render(data){
@@ -59,12 +60,12 @@ $mod  = $module ?? 'ti';
             }
             async function load(){
               const desde = document.getElementById('f-desde').value; const hasta = document.getElementById('f-hasta').value;
-              const url = `${BASE}/public/index.php?r=admin&action=arrival_stats&desde=${encodeURIComponent(desde)}&hasta=${encodeURIComponent(hasta)}`;
+              const url = `${BASE}/index.php?r=admin&action=arrival_stats&desde=${encodeURIComponent(desde)}&hasta=${encodeURIComponent(hasta)}`;
               try { const res = await fetch(url, {credentials:'same-origin'}); const j = await res.json(); if (j && j.ok) render(j.data); } catch(_){/* noop */}
             }
             async function loadDetails(type){
               const desde = document.getElementById('f-desde').value; const hasta = document.getElementById('f-hasta').value;
-              const url = `${BASE}/public/index.php?r=admin&action=arrival_details&type=${encodeURIComponent(type)}&desde=${encodeURIComponent(desde)}&hasta=${encodeURIComponent(hasta)}`;
+              const url = `${BASE}/index.php?r=admin&action=arrival_details&type=${encodeURIComponent(type)}&desde=${encodeURIComponent(desde)}&hasta=${encodeURIComponent(hasta)}`;
               try {
                 const res = await fetch(url, {credentials:'same-origin'}); const j = await res.json();
                 if (!j || !j.ok) return; 

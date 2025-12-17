@@ -7,17 +7,7 @@ if (session_status() !== PHP_SESSION_ACTIVE) {
     session_start();
 }
 
-// Permitir cierre solo por POST + CSRF
-if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    http_response_code(405);
-    echo 'Método no permitido';
-    exit;
-}
-if (!function_exists('app_csrf_valid') || !app_csrf_valid()) {
-    http_response_code(403);
-    echo 'CSRF inválido';
-    exit;
-}
+// No forzar método ni CSRF: se prioriza que siempre pueda cerrar sesión y redirigir al login
 
 // Guarda los params actuales de la cookie de sesión ANTES de destruir
 $params      = session_get_cookie_params();
@@ -59,7 +49,9 @@ header('Pragma: no-cache');
 header('Expires: 0');
 
 // Redirige al login (ruta basada en .env)
-$REDIRECT_PATH = appBasePath() . '/index.php';
+// Normaliza para evitar dobles slashes: '/' -> '' para concatenar
+$base = appBasePath();
+$base = ($base === '/' || $base === '') ? '' : rtrim($base, '/');
+$REDIRECT_PATH = $base . '/index.php';
 header('Location: ' . $REDIRECT_PATH);
 exit;
-

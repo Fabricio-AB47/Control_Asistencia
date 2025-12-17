@@ -200,6 +200,7 @@ th{background-color:#f2f2f2;font-weight:bold;}
             'Jornada',
             'Almuerzo',
             'Horas efectivas',
+            'Horas extra (>8h)',
             'Tardanza (min)',
             'Salida anticipada (min)',
         ];
@@ -218,6 +219,7 @@ th{background-color:#f2f2f2;font-weight:bold;}
             $secJornada  = ($dtIn && $dtOut) ? $secs($dtIn, $dtOut) : 0;
             $secAlmuerzo = ($dtSl && $dtRt)  ? max(0, $secs($dtSl, $dtRt)) : 0;
             $secEfectiva = max(0, $secJornada - $secAlmuerzo);
+            $secExtra8h  = max(0, $secEfectiva - 28800);
 
             $tardanzaMin = 0;
             if ($horaProgIn && $dtIn) {
@@ -242,6 +244,7 @@ th{background-color:#f2f2f2;font-weight:bold;}
             echo "<td>".$h($hhmmss($secJornada))."</td>";
             echo "<td>".$h($hhmmss($secAlmuerzo))."</td>";
             echo "<td>".$h($hhmmss($secEfectiva))."</td>";
+            echo "<td>".$h($hhmmss($secExtra8h))."</td>";
             echo "<td>".$h($tardanzaMin)."</td>";
             echo "<td>".$h($salidaAntMin)."</td>";
             echo "</tr>\n";
@@ -390,6 +393,7 @@ th{background-color:#f2f2f2;font-weight:bold;}
             'Jornada',
             'Almuerzo',
             'Horas efectivas',
+            'Horas extra (>8h)',
             'Tardanza (min)',
             'Tiempo adicional (min)',
         ];
@@ -408,6 +412,7 @@ th{background-color:#f2f2f2;font-weight:bold;}
             $secJornada  = ($dtIn && $dtOut) ? $secs($dtIn, $dtOut) : 0;
             $secAlmuerzo = ($dtSl && $dtRt)  ? max(0, $secs($dtSl, $dtRt)) : 0;
             $secEfectiva = max(0, $secJornada - $secAlmuerzo);
+            $secExtra8h  = max(0, $secEfectiva - 28800);
 
             $tardanzaMin = 0;
             $extraMin    = 0;
@@ -435,6 +440,7 @@ th{background-color:#f2f2f2;font-weight:bold;}
             echo "<td>".$h($hhmmss($secJornada))."</td>";
             echo "<td>".$h($hhmmss($secAlmuerzo))."</td>";
             echo "<td>".$h($hhmmss($secEfectiva))."</td>";
+            echo "<td>".$h($hhmmss($secExtra8h))."</td>";
             echo "<td>".$h($tardanzaMin)."</td>";
             echo "<td>".$h($extraMin)."</td>";
             echo "</tr>\n";
@@ -444,4 +450,3 @@ th{background-color:#f2f2f2;font-weight:bold;}
         echo "</body></html>";
     }
 }
-

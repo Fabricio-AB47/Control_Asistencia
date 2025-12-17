@@ -11,12 +11,6 @@ $ip = getClientIP();
 
 // Paso 2: selección de cuenta cuando hay correos duplicados (excepto admin)
 if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['select_user_id'])) {
-    if (!function_exists('app_csrf_valid') || !app_csrf_valid()) {
-        $error = 'CSRF inválido. Recarga la página e inténtalo de nuevo.';
-        include __DIR__ . "/app/Views/auth/login.php";
-        exit();
-    }
-    
     try {
         $selId = (int)($_POST['select_user_id'] ?? 0);
         if ($selId <= 0) {
@@ -53,12 +47,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['select_user_id'])) {
 }
 
 if ($_SERVER["REQUEST_METHOD"] === "POST" && !isset($_POST['select_user_id'])) {
-    if (!function_exists('app_csrf_valid') || !app_csrf_valid()) {
-        $error = 'CSRF inválido. Recarga la página e inténtalo de nuevo.';
-        include __DIR__ . "/app/Views/auth/login.php";
-        exit();
-    }
-    
     try {
         $usuario  = trim($_POST['usuario'] ?? '');
         $password = trim($_POST['password'] ?? '');
@@ -197,7 +185,8 @@ function loginSuccess($user) {
         exit();
     }
     $base = function_exists('appBasePath') ? appBasePath() : '';
-    header('Location: ' . $base . '/public/index.php?r=dashboard&mod=' . $mod);
+    $routerBase = ($base === '/') ? '' : rtrim($base, '/');
+    header('Location: ' . $routerBase . '/index.php?r=dashboard&mod=' . $mod);
     exit();
 }
 

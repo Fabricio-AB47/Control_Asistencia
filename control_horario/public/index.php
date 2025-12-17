@@ -57,12 +57,7 @@ switch ($route) {
         }
         break;
     default:
-        // Ayuda mínima
-        header('Content-Type: text/plain; charset=UTF-8');
-        echo "Rutas disponibles:\n";
-        echo "- /public/index.php?r=control&mod=ti\n";
-        echo "- /public/index.php?r=reporte&mod=ti&desde=YYYY-MM-DD&hasta=YYYY-MM-DD\n";
-        echo "  (mod: ti | financiero | admisiones | academico | bienestar | autoridades | docente)\n";
+        // Si no hay ruta, servir el login del index raíz (compartido)
+        include dirname(__DIR__) . '/index.php';
+        exit();
 }
-
-

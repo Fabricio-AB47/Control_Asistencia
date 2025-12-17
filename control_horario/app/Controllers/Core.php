@@ -42,9 +42,13 @@ function appBasePath(): string {
     ];
     $val = null;
     foreach ($candidates as $c) { if (is_string($c) && $c !== '') { $val = $c; break; } }
-    if ($val === null) $val = '/Control_Asistencia/control_horario';
+    // Default: root. The previous default assumed a subfolder (/Control_Asistencia/control_horario) which
+    // caused IIS to resolve paths like /Control_Asistencia/control_horario/index.php relative to public/.
+    if ($val === null) $val = '/';
     $val = trim($val);
     if ($val === '') $val = '/';
+    // Normalize double slashes and trailing slash
+    $val = preg_replace('#/+#', '/', $val);
     if ($val[0] !== '/') $val = '/' . $val;
     if (strlen($val) > 1) $val = rtrim($val, '/');
     return $cached = $val;

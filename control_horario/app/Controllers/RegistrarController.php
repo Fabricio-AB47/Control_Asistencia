@@ -8,9 +8,8 @@ class RegistrarController
     public function handle(string $mod, string $action): void
     {
         app_boot_session();
+        \app_session_guard(900);
         header('Content-Type: text/plain; charset=UTF-8');
-
-        if (!isset($_SESSION['id_usuario'])) { http_response_code(401); echo 'No autorizado'; return; }
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') { http_response_code(405); echo 'Método no permitido'; return; }
         if (!\app_csrf_valid()) { http_response_code(403); echo 'CSRF inválido'; return; }
 
@@ -81,6 +80,5 @@ class RegistrarController
         }
     }
 }
-
 
 

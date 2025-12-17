@@ -47,13 +47,14 @@ function hhmmss($seconds){ if($seconds<=0)return '00:00:00'; $h=intdiv($seconds,
           <th>Jornada</th>
           <th>Almuerzo</th>
           <th>Horas efectivas</th>
+          <th>Horas extra (&gt; 8h)</th>
           <th>Tardanza</th>
           <th>Tiempo adicional</th>
         </tr>
       </thead>
       <tbody class="table__body">
 <?php
-  $totalEfectiva = 0; $diasContados = 0;
+  $totalEfectiva = 0; $totalExtra = 0; $diasContados = 0;
   foreach ($rows as $r):
     $fecha = $r['fecha'];
     $dtIn  = ($r['hora_ingreso'])     ? new DateTime($fecha.' '.$r['hora_ingreso']) : null;
@@ -64,6 +65,7 @@ function hhmmss($seconds){ if($seconds<=0)return '00:00:00'; $h=intdiv($seconds,
     $secJornada  = ($dtIn && $dtOut) ? secs($dtIn, $dtOut) : 0;
     $secAlmuerzo = ($dtSl && $dtRt)  ? max(0, secs($dtSl, $dtRt)) : 0;
     $secEfectiva = max(0, $secJornada - $secAlmuerzo);
+    $secExtra8h  = max(0, $secEfectiva - 28800); // horas efectivas por encima de 8h
 
     $tardanzaMin = 0;
     if ($horaProgIn && $dtIn) {
@@ -77,7 +79,7 @@ function hhmmss($seconds){ if($seconds<=0)return '00:00:00'; $h=intdiv($seconds,
       $dif = secs($dtOut, $dtProgOut); // negativo si salió antes
       $salidaAntMin = $dif < 0 ? intdiv(abs($dif), 60) : 0;
     }
-    if ($secJornada > 0) { $totalEfectiva += $secEfectiva; $diasContados++; }
+    if ($secJornada > 0) { $totalEfectiva += $secEfectiva; $totalExtra += $secExtra8h; $diasContados++; }
 
     $ingresoCell = $r['hora_ingreso']
       ? h($r['hora_ingreso'])." <span class='badge'>".h($r['estado_ingreso'])."</span><br>".h($r['dir_in']).linkMap($r['lat_in'],$r['lon_in'],'Mapa') : '—';
@@ -97,6 +99,7 @@ function hhmmss($seconds){ if($seconds<=0)return '00:00:00'; $h=intdiv($seconds,
           <td><?= hhmmss($secJornada) ?></td>
           <td><?= hhmmss($secAlmuerzo) ?></td>
           <td><?= hhmmss($secEfectiva) ?></td>
+          <td><?= hhmmss($secExtra8h) ?></td>
           <td><?= ($tardanzaMin>0? "<span class='chip chip--warn'>".$tardanzaMin." min</span>": '—') ?></td>
           <td><?= ($salidaAntMin>0? "<span class='chip chip--info'>".$salidaAntMin." min</span>": '—') ?></td>
         </tr>
@@ -108,6 +111,7 @@ function hhmmss($seconds){ if($seconds<=0)return '00:00:00'; $h=intdiv($seconds,
             Total horas efectivas (<?= (int)$diasContados ?> día<?= $diasContados===1?'':'s' ?>):
           </td>
           <td class="table__foot-value"><?= hhmmss($totalEfectiva) ?></td>
+          <td class="table__foot-value"><?= hhmmss($totalExtra) ?></td>
           <td colspan="2"></td>
         </tr>
       </tfoot>
@@ -145,4 +149,3 @@ function hhmmss($seconds){ if($seconds<=0)return '00:00:00'; $h=intdiv($seconds,
   document.addEventListener('click', function(e){ const a = e.target.closest('a.js-map'); if(!a) return; if (e.ctrlKey || e.metaKey || a.target === '_blank') return; e.preventDefault(); const lat=a.getAttribute('data-lat'); const lon=a.getAttribute('data-lon'); openMap(lat, lon); }, {passive:false});
 })();
 </script>
-

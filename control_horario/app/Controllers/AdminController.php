@@ -82,7 +82,7 @@ class AdminController extends BaseController
     {
         $base = function_exists('appBasePath') ? appBasePath() : '';
         $q = $isError ? ('err=' . urlencode($message)) : ('msg=' . urlencode($message));
-        header('Location: ' . $base . '/public/index.php?r=admin&action=roles&' . $q);
+        header('Location: ' . $base . '/index.php?r=admin&action=roles&' . $q);
         exit;
     }
 
@@ -189,7 +189,7 @@ class AdminController extends BaseController
     {
         $base = function_exists('appBasePath') ? appBasePath() : '';
         $q = $isError ? ('err=' . urlencode($message)) : ('msg=' . urlencode($message));
-        header('Location: ' . $base . '/public/index.php?r=admin&action=users&' . $q);
+        header('Location: ' . $base . '/index.php?r=admin&action=users&' . $q);
         exit;
     }
 
@@ -267,7 +267,7 @@ class AdminController extends BaseController
     {
         $base = function_exists('appBasePath') ? appBasePath() : '';
         $q = $isError ? ('err=' . urlencode($message)) : ('msg=' . urlencode($message));
-        header('Location: ' . $base . '/public/index.php?r=admin&action=schedules&' . $q);
+        header('Location: ' . $base . '/index.php?r=admin&action=schedules&' . $q);
         exit;
     }
 
@@ -340,14 +340,34 @@ class AdminController extends BaseController
                 $datos['salida']  = $row['hora_salida'] ?? '';
             }
         }
-        // Rol seleccionado por defecto (si hay usuario seleccionado)
+        // Rol y nombre seleccionados (si hay usuario seleccionado)
         $rolUsuarioSel = '';
+        $nombreUsuarioSel = '';
         if ($uid > 0) {
             foreach ($usuarios as $u) {
                 if ((int)$u['id_usuario'] === $uid) {
                     $rolUsuarioSel = (string)($u['rol'] ?? '');
+                    $nombreUsuarioSel = (string)($u['nombre'] ?? '');
                     break;
                 }
+            }
+        }
+
+        // Calcular horas efectivas si hay datos cargados
+        $horasEfectivas = '';
+        if (!empty($datos['ingreso']) && !empty($datos['salida'])) {
+            $sIn  = strtotime($fecha . ' ' . $datos['ingreso']);
+            $sOut = strtotime($fecha . ' ' . $datos['salida']);
+            $sSl  = !empty($datos['sl']) ? strtotime($fecha . ' ' . $datos['sl']) : null;
+            $sRt  = !empty($datos['rt']) ? strtotime($fecha . ' ' . $datos['rt']) : null;
+            if ($sIn !== false && $sOut !== false) {
+                $jornada = max(0, $sOut - $sIn);
+                $alm = ($sSl !== null && $sRt !== null) ? max(0, $sRt - $sSl) : 0;
+                $eff = max(0, $jornada - $alm);
+                $h = intdiv($eff, 3600);
+                $m = intdiv($eff % 3600, 60);
+                $sec = $eff % 60;
+                $horasEfectivas = sprintf('%02d:%02d:%02d', $h, $m, $sec);
             }
         }
 
@@ -357,6 +377,8 @@ class AdminController extends BaseController
             'menu'=>$rbac->menuForRole($_SESSION['tipo'] ?? '', 'admin'),
             'usuarios'=>$usuarios, 'uidSel'=>$uid, 'fechaSel'=>$fecha, 'datos'=>$datos,
             'rolSel'=>$rolUsuarioSel,
+            'nombreSel'=>$nombreUsuarioSel,
+            'horasEfectivas'=>$horasEfectivas,
             'msg'=>$_GET['msg']??'', 'err'=>$_GET['err']??''
         ]);
     }
@@ -381,12 +403,25 @@ class AdminController extends BaseController
             $st = $db->prepare('SELECT id_fecha_registro FROM fecha_registro WHERE id_usuario=? AND fecha_ingreso=? LIMIT 1');
             $st->execute([$uid, $fecha]);
             $idFecha = (int)($st->fetchColumn() ?: 0);
-            if ($idFecha<=0) { $this->redirectEditTimbres('No existe un registro de fecha para ese usuario y día.', true); return; }
+            if ($idFecha<=0) {
+                // Si no existe, créalo para permitir edición manual
+                $insFr = $db->prepare('INSERT INTO fecha_registro (id_usuario, fecha_ingreso) VALUES (?, ?)');
+                $insFr->execute([$uid, $fecha]);
+                $idFecha = (int)$db->lastInsertId();
+            }
 
             // Actualizaciones condicionales (solo si viene hora)
             if ($ingreso !== '') {
-                $q = $db->prepare('UPDATE horario_ingreso SET hora_ingreso=? WHERE id_usuario=? AND id_fecha_registro=?');
-                $q->execute([$ingreso, $uid, $idFecha]);
+                // Upsert ingreso
+                $q = $db->prepare('SELECT 1 FROM horario_ingreso WHERE id_usuario=? AND id_fecha_registro=? LIMIT 1');
+                $q->execute([$uid, $idFecha]);
+                if ($q->fetch()) {
+                    $q = $db->prepare('UPDATE horario_ingreso SET hora_ingreso=? WHERE id_usuario=? AND id_fecha_registro=?');
+                    $q->execute([$ingreso, $uid, $idFecha]);
+                } else {
+                    $ins = $db->prepare('INSERT INTO horario_ingreso (id_usuario, id_fecha_registro, id_estado_ingreso, hora_ingreso, latitud, longitud, direccion) VALUES (?, ?, ?, ?, ?, ?, ?)');
+                    $ins->execute([$uid, $idFecha, null, $ingreso, null, null, null]);
+                }
                 // Recalcular estado_ingreso con tolerancia de 10 minutos sobre hora_ingreso_personal
                 $hp = $db->prepare('SELECT hora_ingreso_personal FROM horario_entrada_personal WHERE id_usuario=? LIMIT 1');
                 $hp->execute([$uid]);
@@ -418,11 +453,11 @@ class AdminController extends BaseController
                 $q = $db->prepare('SELECT 1 FROM horario_sl_almuerzo WHERE id_usuario=? AND id_fecha_registro=? LIMIT 1');
                 $q->execute([$uid, $idFecha]);
                 if ($q->fetch()) {
-                    $q = $db->prepare('UPDATE horario_sl_almuerzo SET hora_sl_almuerzo=? WHERE id_usuario=? AND id_fecha_registro=?');
-                    $q->execute([$sl, $uid, $idFecha]);
+                    $q = $db->prepare('UPDATE horario_sl_almuerzo SET hora_sl_almuerzo=?, latitud=?, longitud=?, direccion=? WHERE id_usuario=? AND id_fecha_registro=?');
+                    $q->execute([$sl, $coordLat, $coordLon, $coordDir, $uid, $idFecha]);
                 } else {
                     if ($coordLat === null || $coordLon === null || $coordDir === null) {
-                        $this->redirectEditTimbres('No existe un registro de ingreso para copiar ubicación en salida de almuerzo.', true);
+                        $this->redirectEditTimbres('Registra hora de ingreso (con ubicación) antes de añadir salida de almuerzo.', true);
                         return;
                     }
                     $idEstadoSl = $this->ensureCatalog($db, 'estado_salida_almuerzo', 'id_estado_salida_almuerzo', 'detalle_salida_almuerzo', 'Salida al almuerzo');
@@ -435,11 +470,11 @@ class AdminController extends BaseController
                 $q = $db->prepare('SELECT 1 FROM horario_rt_almuerzo WHERE id_usuario=? AND id_fecha_registro=? LIMIT 1');
                 $q->execute([$uid, $idFecha]);
                 if ($q->fetch()) {
-                    $q = $db->prepare('UPDATE horario_rt_almuerzo SET hora_rt_almuerzo=? WHERE id_usuario=? AND id_fecha_registro=?');
-                    $q->execute([$rt, $uid, $idFecha]);
+                    $q = $db->prepare('UPDATE horario_rt_almuerzo SET hora_rt_almuerzo=?, latitud=?, longitud=?, direccion=? WHERE id_usuario=? AND id_fecha_registro=?');
+                    $q->execute([$rt, $coordLat, $coordLon, $coordDir, $uid, $idFecha]);
                 } else {
                     if ($coordLat === null || $coordLon === null || $coordDir === null) {
-                        $this->redirectEditTimbres('No existe un registro de ingreso para copiar ubicación en regreso de almuerzo.', true);
+                        $this->redirectEditTimbres('Registra hora de ingreso (con ubicación) antes de añadir regreso de almuerzo.', true);
                         return;
                     }
                     $idEstadoRt = $this->ensureCatalog($db, 'estado_retorno_almuerzo', 'id_estado_retorno_almuerzo', 'detalle_retorno_almuerzo', 'Regreso de almuerzo');
@@ -455,11 +490,11 @@ class AdminController extends BaseController
                 $existsSalida = (bool)$q->fetch();
 
                 if ($existsSalida) {
-                    $q = $db->prepare('UPDATE horario_salida SET hora_salida=? WHERE id_usuario=? AND id_fecha_registro=?');
-                    $q->execute([$salida, $uid, $idFecha]);
+                    $q = $db->prepare('UPDATE horario_salida SET hora_salida=?, latitud=?, longitud=?, direccion=? WHERE id_usuario=? AND id_fecha_registro=?');
+                    $q->execute([$salida, $coordLat, $coordLon, $coordDir, $uid, $idFecha]);
                 } else {
                     if ($coordLat === null || $coordLon === null || $coordDir === null) {
-                        $this->redirectEditTimbres('No existe un registro de ingreso para copiar ubicación en salida laboral.', true);
+                        $this->redirectEditTimbres('Registra hora de ingreso (con ubicación) antes de añadir salida laboral.', true);
                         return;
                     }
                     // Calcular estado de salida contra horario programado
@@ -515,7 +550,7 @@ class AdminController extends BaseController
     {
         $base = function_exists('appBasePath') ? appBasePath() : '';
         $q = $isError ? ('err=' . urlencode($message)) : ('msg=' . urlencode($message));
-        header('Location: ' . $base . '/public/index.php?r=admin&action=timbres_edit&' . $q);
+        header('Location: ' . $base . '/index.php?r=admin&action=timbres_edit&' . $q);
         exit;
     }
 

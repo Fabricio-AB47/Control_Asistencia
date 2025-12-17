@@ -67,13 +67,13 @@ $mod = $module ?? 'ti';
   const CSRF  = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
 
   // Endpoints por módulo (mantiene los PHP actuales)
-  const MOD = <?= json_encode($mod) ?>;
-  const BASE = <?= json_encode($base ?? '') ?>;
+const MOD = <?= json_encode($mod) ?>;
+const BASE = <?= json_encode(($base === '/' || $base === '') ? '' : rtrim($base, '/')) ?>;
   const ENDPOINTS = {
-    ingreso:         `${BASE}/public/index.php?r=registrar&mod=${MOD}&action=ingreso`,
-    salidaAlmuerzo:  `${BASE}/public/index.php?r=registrar&mod=${MOD}&action=salida_almuerzo`,
-    regresoAlmuerzo: `${BASE}/public/index.php?r=registrar&mod=${MOD}&action=regreso_almuerzo`,
-    salidaLaboral:   `${BASE}/public/index.php?r=registrar&mod=${MOD}&action=salida_laboral`
+    ingreso:         `${BASE}/index.php?r=registrar&mod=${MOD}&action=ingreso`,
+    salidaAlmuerzo:  `${BASE}/index.php?r=registrar&mod=${MOD}&action=salida_almuerzo`,
+    regresoAlmuerzo: `${BASE}/index.php?r=registrar&mod=${MOD}&action=regreso_almuerzo`,
+    salidaLaboral:   `${BASE}/index.php?r=registrar&mod=${MOD}&action=salida_laboral`
   };
 
   const REDIR = <?= json_encode($redirect ?? ('../'+($mod||'ti')+'/dashboard.php')) ?>;
@@ -131,6 +131,11 @@ $mod = $module ?? 'ti';
         body: JSON.stringify({ latitud: lat, longitud: lon, direccion: addr, accion: etiqueta })
       });
 
+      if (res.redirected || res.status === 401 || res.headers.get('X-Session-Expired') === '1') {
+        window.location.href = res.url || `${BASE}/index.php`;
+        return;
+      }
+
       const payload = await res.text();
       const messageOnly = (payload || '').replace(/<script[\s\S]*?<\/script>/gi,'').trim();
       if (!res.ok) {
@@ -155,7 +160,7 @@ $mod = $module ?? 'ti';
   let temporizador = setTimeout(cerrarSesionPorInactividad, tiempoLimite);
   async function cerrarSesionPorInactividad() {
     try {
-      await fetch('<?= $base ?>/logout.php', {
+      await fetch(`${BASE}/logout.php`, {
         method: 'POST',
         credentials: 'same-origin',
         headers: { 'Content-Type':'application/x-www-form-urlencoded' },
