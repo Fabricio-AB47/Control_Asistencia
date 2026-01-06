@@ -13,17 +13,23 @@ $mod  = $module ?? 'ti';
 </style>
 <main class="main-control">
   <div class="container">
-    <h3>Panel de <?= htmlspecialchars(ucfirst($mod), ENT_QUOTES, 'UTF-8') ?></h3>
+    <h3>Panel de <?= htmlspecialchars($mod === 'admin' ? 'Administrador' : ucfirst($mod), ENT_QUOTES, 'UTF-8') ?></h3>
     <?php if ($mod !== 'admin'): ?>
-      <p>Accesos r├ípidos del m├│dulo.</p>
+      <p>Accesos rápidos del módulo.</p>
       <div class="buttons">
-        <a class="btn" href="<?= $routerBase ?>/index.php?r=control&mod=<?= htmlspecialchars($mod,ENT_QUOTES,'UTF-8') ?>">≡ƒòÆ Registro de Control Horario</a>
-        <a class="btn" href="<?= $routerBase ?>/index.php?r=reporte&mod=<?= htmlspecialchars($mod,ENT_QUOTES,'UTF-8') ?>">≡ƒôä Reporte de Timbres</a>
+        <a class="btn" href="<?= $routerBase ?>/index.php?r=control&mod=<?= htmlspecialchars($mod,ENT_QUOTES,'UTF-8') ?>">
+          <span class="btn-icon" aria-hidden="true">&#x1F4DD;</span>
+          <span>Registro de Control Horario</span>
+        </a>
+        <a class="btn" href="<?= $routerBase ?>/index.php?r=reporte&mod=<?= htmlspecialchars($mod,ENT_QUOTES,'UTF-8') ?>">
+          <span class="btn-icon" aria-hidden="true">&#x1F4C8;</span>
+          <span>Reporte de Timbres</span>
+        </a>
       </div>
     <?php else: ?>
-      <p>Bienvenido al Panel de Administraci├│n. Usa el men├║ superior para navegar (Roles, Usuarios, Horarios y Reporte General).</p>
+      <p>Bienvenido al Panel de Administración. Usa el menú superior para navegar (Roles, Usuarios, Horarios y Reporte General).</p>
       <section class="dash-section">
-        <h4 class="dash-title">Distribuci├│n de llegadas (a tiempo/temprano vs atrasos)</h4>
+        <h4 class="dash-title">Distribución de tiempo de llegadas (a tiempo/temprano vs atrasos)</h4>
         <?php $hoy=(new DateTime('now', new DateTimeZone('America/Guayaquil')))->format('Y-m-d'); $ini=(new DateTime('first day of this month'))->format('Y-m-d'); ?>
         <form id="form-stats" class="filter chart-actions dash-form" method="get" onsubmit="return false;">
           <label class="filter__field">Desde <input type="date" id="f-desde" value="<?= htmlspecialchars($ini,ENT_QUOTES,'UTF-8') ?>"></label>

@@ -579,6 +579,9 @@ template {
   border-radius: 999px;
   border: 2px solid #ffffff;
   padding: 0.45rem 1.3rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
 }
 
 .header__menu .btn:hover,
@@ -594,6 +597,17 @@ template {
   color: #931913;
   border-radius: 999px;
   border: 2px solid #931913;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.header__menu .nav-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1em;
+  line-height: 1;
 }
 
 /* ==== CONTENEDORES (ajustes suaves) ==== */

@@ -9,9 +9,10 @@ $routerBase = function_exists('appRouterBase') ? rtrim(appRouterBase(), '/') : $
 if (!function_exists('normalizeRoleName')) {
     // Normaliza acentos para comparar roles sin problemas de encoding
     function normalizeRoleName($name) {
+        // Mapa de acentos usando bytes UTF-8 para evitar problemas de encoding en el archivo
         $map = [
-            'A­' => 'a', 'Ac' => 'e', 'A-' => 'i', 'A3' => 'o', 'A§' => 'u', 'Añ' => 'n',
-            'A?' => 'A', 'A%' => 'E', 'A?' => 'I', 'A"' => 'O', 'As' => 'U', 'A`' => 'N',
+            "\xC3\xA1" => 'a', "\xC3\xA9" => 'e', "\xC3\xAD" => 'i', "\xC3\xB3" => 'o', "\xC3\xBA" => 'u', "\xC3\xB1" => 'n',
+            "\xC3\x81" => 'A', "\xC3\x89" => 'E', "\xC3\x8D" => 'I', "\xC3\x93" => 'O', "\xC3\x9A" => 'U', "\xC3\x91" => 'N',
         ];
         $clean = strtr($name, $map);
         $ascii = @iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $clean);
@@ -74,15 +75,36 @@ if (!function_exists('normalizeRoleName')) {
       $isAdmin = ($rolNorm === 'ADMIN' || $rolNorm === 'ADMINISTRADOR');
     ?>
     <?php if ($isAdmin): ?>
-      <a class="btn btn--ghost is-active" href="<?= $routerBase ?>/index.php?r=dashboard&mod=admin">🏠 Inicio Admin</a>
-      <a class="btn btn--ghost" href="<?= $routerBase ?>/index.php?r=admin&action=roles">🧭 Gestión de Roles</a>
-      <a class="btn btn--ghost" href="<?= $routerBase ?>/index.php?r=admin&action=users">👥 Gestión de Usuarios</a>
-      <a class="btn btn--ghost" href="<?= $routerBase ?>/index.php?r=admin&action=schedules">🗓️ Horarios Entrada/Salida</a>
-      <a class="btn btn--ghost" href="<?= $routerBase ?>/index.php?r=admin&action=timbres_edit">⏱️ Editar Timbres</a>
-      <a class="btn btn--ghost" href="<?= $routerBase ?>/index.php?r=reporte_all">📊 Reporte General</a>
+      <a class="btn btn--ghost is-active" href="<?= $routerBase ?>/index.php?r=dashboard&mod=admin">
+        <span class="nav-icon" aria-hidden="true">&#x1F3E0;</span>
+        <span>Inicio Admin</span>
+      </a>
+      <a class="btn btn--ghost" href="<?= $routerBase ?>/index.php?r=admin&action=roles">
+        <span class="nav-icon" aria-hidden="true">&#x1F6E1;</span>
+        <span>Gesti&oacute;n de Roles</span>
+      </a>
+      <a class="btn btn--ghost" href="<?= $routerBase ?>/index.php?r=admin&action=users">
+        <span class="nav-icon" aria-hidden="true">&#x1F465;</span>
+        <span>Gesti&oacute;n de Usuarios</span>
+      </a>
+      <a class="btn btn--ghost" href="<?= $routerBase ?>/index.php?r=admin&action=schedules">
+        <span class="nav-icon" aria-hidden="true">&#x23F0;</span>
+        <span>Horarios Entrada/Salida</span>
+      </a>
+      <a class="btn btn--ghost" href="<?= $routerBase ?>/index.php?r=admin&action=timbres_edit">
+        <span class="nav-icon" aria-hidden="true">&#x1F514;</span>
+        <span>Editar Timbres</span>
+      </a>
+      <a class="btn btn--ghost" href="<?= $routerBase ?>/index.php?r=reporte_all">
+        <span class="nav-icon" aria-hidden="true">&#x1F4CA;</span>
+        <span>Reporte General</span>
+      </a>
     <?php else: ?>
       <?php if (!empty($module)): ?>
-        <a class="btn btn--ghost" href="<?= $routerBase ?>/index.php?r=reporte&mod=<?= htmlspecialchars($module,ENT_QUOTES,'UTF-8') ?>">📄 Reporte</a>
+        <a class="btn btn--ghost" href="<?= $routerBase ?>/index.php?r=reporte&mod=<?= htmlspecialchars($module,ENT_QUOTES,'UTF-8') ?>">
+          <span class="nav-icon" aria-hidden="true">&#x1F4C4;</span>
+          <span>Reporte</span>
+        </a>
       <?php endif; ?>
     <?php endif; ?>
 

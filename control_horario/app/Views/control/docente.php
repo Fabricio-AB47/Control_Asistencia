@@ -16,13 +16,13 @@ $routerBase = function_exists('appRouterBase') ? appRouterBase() : (($base === '
     <div class="buttons doc-buttons">
       <form id="form-doc-ingreso" method="post">
         <button type="submit" class="btn-ingreso" id="btn-doc-ingreso">
-          <span class="btn-icon">🕒</span>
+          <span class="btn-icon">&#x1F3EB;</span>
           <span>Ingreso Docente</span>
         </button>
       </form>
       <form id="form-doc-fin" method="post">
         <button type="submit" class="btn-salida-laboral" id="btn-doc-fin">
-          <span class="btn-icon">🏁</span>
+          <span class="btn-icon">&#x1F6D1;</span>
           <span>Fin Docente</span>
         </button>
       </form>

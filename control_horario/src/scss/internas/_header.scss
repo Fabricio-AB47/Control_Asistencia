@@ -73,6 +73,9 @@
   border-radius: 999px;
   border: 2px solid v.$blanco;
   padding: .45rem 1.3rem;
+  display: inline-flex;
+  align-items: center;
+  gap: .55rem;
 }
 
 .header__menu .btn:hover,
@@ -88,4 +91,15 @@
   color: v.$rojo;
   border-radius: 999px;
   border: 2px solid v.$rojo;
+  display: inline-flex;
+  align-items: center;
+  gap: .55rem;
+}
+
+.header__menu .nav-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1em;
+  line-height: 1;
 }

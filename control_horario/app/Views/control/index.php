@@ -17,7 +17,7 @@ $routerBase = function_exists('appRouterBase') ? appRouterBase() : (($base === '
       <!-- Botón para registrar ingreso -->
       <form id="form-ingreso" method="post">
         <button type="submit" class="btn-ingreso" id="btn-ingreso">
-          <span class="btn-icon">🟢</span>
+          <span class="btn-icon">&#x1F7E2;</span>
           <span>Registrar Ingreso</span>
         </button>
       </form>
@@ -25,7 +25,7 @@ $routerBase = function_exists('appRouterBase') ? appRouterBase() : (($base === '
       <!-- Botón para registrar salida de almuerzo -->
       <form id="form-salida-almuerzo" method="post">
         <button type="submit" class="btn-salida-almuerzo" id="btn-salida-almuerzo">
-          <span class="btn-icon">🍽️⬅️</span>
+          <span class="btn-icon">&#x1F37D;&#x2B05;</span>
           <span>Salida al Almuerzo</span>
         </button>
       </form>
@@ -33,7 +33,7 @@ $routerBase = function_exists('appRouterBase') ? appRouterBase() : (($base === '
       <!-- Botón para registrar regreso del almuerzo -->
       <form id="form-regreso-almuerzo" method="post">
         <button type="submit" class="btn-regreso-almuerzo" id="btn-regreso-almuerzo">
-          <span class="btn-icon">🍽️➡️</span>
+          <span class="btn-icon">&#x1F37D;&#x27A1;</span>
           <span>Regreso del Almuerzo</span>
         </button>
       </form>
@@ -41,7 +41,7 @@ $routerBase = function_exists('appRouterBase') ? appRouterBase() : (($base === '
       <!-- Botón para registrar salida laboral -->
       <form id="form-salida-laboral" method="post">
         <button type="submit" class="btn-salida-laboral" id="btn-salida-laboral">
-          <span class="btn-icon">🚪</span>
+          <span class="btn-icon">&#x1F6AA;</span>
           <span>Salida Laboral</span>
         </button>
       </form>
