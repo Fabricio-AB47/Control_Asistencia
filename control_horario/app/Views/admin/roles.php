@@ -1,4 +1,4 @@
-<?php $base = $base ?? (function_exists('appBasePath') ? appBasePath() : ''); ?>
+<?php $base = $base ?? (function_exists('appRouterBase') ? appRouterBase() : (function_exists('appAssetBase') ? appAssetBase() : '')); ?>
 <main class="main-control">
   <div class="container">
     <h3>Gestión de Roles</h3>

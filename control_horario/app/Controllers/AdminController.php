@@ -80,9 +80,9 @@ class AdminController extends BaseController
 
     private function redirectWith(string $message, bool $isError = false): void
     {
-        $base = function_exists('appBasePath') ? appBasePath() : '';
+        $base = function_exists('appRouterBase') ? appRouterBase() : (function_exists('appAssetBase') ? appAssetBase() : '');
         $q = $isError ? ('err=' . urlencode($message)) : ('msg=' . urlencode($message));
-        header('Location: ' . $base . '/index.php?r=admin&action=roles&' . $q);
+        header('Location: ' . rtrim($base, '/') . '/index.php?r=admin&action=roles&' . $q);
         exit;
     }
 
@@ -548,9 +548,9 @@ class AdminController extends BaseController
 
     private function redirectEditTimbres(string $message, bool $isError=false): void
     {
-        $base = function_exists('appBasePath') ? appBasePath() : '';
+        $base = function_exists('appRouterBase') ? appRouterBase() : (function_exists('appAssetBase') ? appAssetBase() : '');
         $q = $isError ? ('err=' . urlencode($message)) : ('msg=' . urlencode($message));
-        header('Location: ' . $base . '/index.php?r=admin&action=timbres_edit&' . $q);
+        header('Location: ' . rtrim($base, '/') . '/index.php?r=admin&action=timbres_edit&' . $q);
         exit;
     }
 

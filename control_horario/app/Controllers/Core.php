@@ -42,9 +42,17 @@ function appBasePath(): string {
     ];
     $val = null;
     foreach ($candidates as $c) { if (is_string($c) && $c !== '') { $val = $c; break; } }
-    // Default: root. The previous default assumed a subfolder (/Control_Asistencia/control_horario) which
-    // caused IIS to resolve paths like /Control_Asistencia/control_horario/index.php relative to public/.
-    if ($val === null) $val = '/';
+    // AutodetecciA3n cuando .env estA-c vacA-o o mal configurado.
+    if ($val === null || trim((string)$val) === '') {
+        $script = $_SERVER['SCRIPT_NAME'] ?? '';
+        $dir = str_replace('\\', '/', dirname($script));
+        $dir = ($dir === '/' || $dir === '\\' || $dir === '.') ? '' : $dir;
+        // Si se ejecuta desde /public/index.php normaliza quitando "/public"
+        if ($dir !== '' && preg_match('#/public$#', $dir)) {
+            $dir = rtrim(preg_replace('#/public$#', '', $dir), '/');
+        }
+        $val = ($dir === '') ? '/' : $dir;
+    }
     $val = trim($val);
     if ($val === '') $val = '/';
     // Normalize double slashes and trailing slash
@@ -52,6 +60,31 @@ function appBasePath(): string {
     if ($val[0] !== '/') $val = '/' . $val;
     if (strlen($val) > 1) $val = rtrim($val, '/');
     return $cached = $val;
+}
+
+/**
+ * Base ya normalizada para assets/rutas estA-ticas.
+ */
+function appAssetBase(): string {
+    $base = appBasePath();
+    return ($base === '/' || $base === '') ? '' : rtrim($base, '/');
+}
+
+/**
+ * Base para rutas del front controller (detecta si se estA-a sirviendo /public).
+ */
+function appRouterBase(): string {
+    $asset = appAssetBase();
+    $script = str_replace('\\', '/', $_SERVER['SCRIPT_NAME'] ?? '');
+    $docRoot = str_replace('\\', '/', $_SERVER['DOCUMENT_ROOT'] ?? '');
+    $inPublicByPath = (strpos($script, '/public/') !== false) || preg_match('#/public/index\\.php$#', $script);
+    $docRootIsPublic = preg_match('#/public/?$#', $docRoot) === 1;
+
+    // Si el sitio ya se sirve con /public como docroot, no agregamos /public.
+    if ($inPublicByPath || $docRootIsPublic) {
+        return $asset;
+    }
+    return $asset . '/public';
 }
 
 if (!function_exists('h')) {

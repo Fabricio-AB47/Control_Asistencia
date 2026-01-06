@@ -1,7 +1,13 @@
-<?php
+﻿<?php
+// Si llegan rutas al front controller del login, despacha al router de /public
+if (isset($_GET['r']) || isset($_GET['route'])) {
+    require __DIR__ . '/public/index.php';
+    exit();
+}
+
 require __DIR__ . '/app/init.php';
 app_boot_session();
-// Asegura token CSRF disponible en vistas (login/selección)
+// Asegura token CSRF disponible en vistas (login/selecciÃ³n)
 if (function_exists('app_ensure_csrf_token')) {
     app_ensure_csrf_token();
 }
@@ -9,12 +15,12 @@ if (function_exists('app_ensure_csrf_token')) {
 $error = "";
 $ip = getClientIP();
 
-// Paso 2: selección de cuenta cuando hay correos duplicados (excepto admin)
+// Paso 2: selecciÃ³n de cuenta cuando hay correos duplicados (excepto admin)
 if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['select_user_id'])) {
     try {
         $selId = (int)($_POST['select_user_id'] ?? 0);
         if ($selId <= 0) {
-            throw new \RuntimeException('Selección inválida.');
+            throw new \RuntimeException('SelecciÃ³n invÃ¡lida.');
         }
         
         $db = conexion();
@@ -25,13 +31,13 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['select_user_id'])) {
     }
     
     if (!isset($_SESSION['login_choices']) || !is_array($_SESSION['login_choices'])) {
-        $error = 'Sesión inválida. Intente nuevamente.';
+        $error = 'SesiÃ³n invÃ¡lida. Intente nuevamente.';
         include __DIR__ . "/app/Views/auth/login.php";
         exit();
     }
     $allowed = array_column($_SESSION['login_choices'], 'id_usuario');
     if (!in_array($selId, $allowed, true)) {
-        $error = 'Selección inválida.';
+        $error = 'SelecciÃ³n invÃ¡lida.';
         include __DIR__ . "/app/Views/auth/login.php";
         exit();
     }
@@ -51,9 +57,9 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && !isset($_POST['select_user_id'])) {
         $usuario  = trim($_POST['usuario'] ?? '');
         $password = trim($_POST['password'] ?? '');
         
-        // Validar entrada básica
+        // Validar entrada bA­sica
         if (empty($usuario) || empty($password)) {
-            throw new \RuntimeException('Usuario y contraseña son requeridos.');
+            throw new \RuntimeException('Usuario y contraseAña son requeridos.');
         }
         
         if (strlen($usuario) > 254) {
@@ -78,8 +84,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && !isset($_POST['select_user_id'])) {
         $rows = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
 
         if (!$rows) {
-            // No registra auditoría para no revelar si el email existe
-            $error = "Usuario o contraseña incorrectos.";
+            // No registra auditorA-a para no revelar si el email existe
+            $error = "Usuario o contraseAña incorrectos.";
         } else {
             $matches = [];
             foreach ($rows as $r) {
@@ -95,37 +101,27 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && !isset($_POST['select_user_id'])) {
                 }
             }
             if (count($matches) === 0) {
-                $error = "Usuario o contraseña incorrectos.";
+                $error = "Usuario o contraseAña incorrectos.";
             } elseif (count($matches) === 1) {
                 loginSuccess($matches[0]);
             } else {
-                // Si entre los matches está ADMIN/ADMINISTRADOR, se inicia como admin directamente
-                $hasAdmin = false;
-                $adminUser = null;
-                foreach ($matches as $m) {
-                    $roleNorm = normalizeRoleName($m['nombre_funcion']);
-                    if ($roleNorm === 'ADMIN' || $roleNorm === 'ADMINISTRADOR') {
-                        $hasAdmin = true;
-                        $adminUser = $m;
-                        break;
-                    }
-                }
-                if ($hasAdmin && $adminUser) {
-                    loginSuccess($adminUser);
-                }
-                // Construir selección por pestañas: Administrativo vs Docente
+                // Construir selecciA3n de roles (incluye admin) para que el usuario elija
                 $choices = [];
                 foreach ($matches as $m) {
                     $roleNorm = normalizeRoleName($m['nombre_funcion']);
                     if ($roleNorm === 'ADMIN' || $roleNorm === 'ADMINISTRADOR') {
-                        continue; // excluir admin de la selección
+                        $cat = 'ADMIN';
+                    } elseif ($roleNorm === 'DOCENTE' || $roleNorm === 'DOCENTES') {
+                        $cat = 'DOCENTE';
+                    } else {
+                        $cat = 'ADMINISTRATIVO';
                     }
-                    $cat = ($roleNorm === 'DOCENTE' || $roleNorm === 'DOCENTES') ? 'DOCENTE' : 'ADMINISTRATIVO';
                     $choices[] = [
                         'id_usuario' => (int)$m['id_usuario'],
                         'nombre'     => $m['primer_nombre'] . ' ' . $m['primer_apellido'],
                         'rol'        => $m['nombre_funcion'],
                         'categoria'  => $cat,
+                        'rol_norm'   => $roleNorm,
                     ];
                 }
                 if (empty($choices)) {
@@ -141,13 +137,11 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && !isset($_POST['select_user_id'])) {
         $error = $e->getMessage();
     }
 }
-
-
 function normalizeRoleName($name) {
-    // Normaliza acentos y mayúsculas para comparar roles sin problemas de encoding
+    // Normaliza acentos y mayÃºsculas para comparar roles sin problemas de encoding
     $map = [
-        'á' => 'a', 'é' => 'e', 'í' => 'i', 'ó' => 'o', 'ú' => 'u', 'ñ' => 'n',
-        'Á' => 'A', 'É' => 'E', 'Í' => 'I', 'Ó' => 'O', 'Ú' => 'U', 'Ñ' => 'N',
+        'Ã¡' => 'a', 'Ã©' => 'e', 'Ã­' => 'i', 'Ã³' => 'o', 'Ãº' => 'u', 'Ã±' => 'n',
+        'Ã' => 'A', 'Ã‰' => 'E', 'Ã' => 'I', 'Ã“' => 'O', 'Ãš' => 'U', 'Ã‘' => 'N',
     ];
     $clean = strtr($name, $map);
     $ascii = @iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $clean);
@@ -157,7 +151,7 @@ function normalizeRoleName($name) {
     return strtoupper($clean);
 }
 
-// ---- Función de login ----
+// ---- FunciÃ³n de login ----
 function loginSuccess($user) {
     session_regenerate_id(true);
     $_SESSION["id_usuario"]     = (int)$user["id_usuario"];
@@ -168,7 +162,7 @@ function loginSuccess($user) {
     $_SESSION["ultimo_acceso"]  = time();
     $_SESSION["token"]          = bin2hex(random_bytes(32));
 
-    // Redirige según rol a MVC (router)
+    // Redirige segÃºn rol a MVC (router)
     $mapIdToMod = [
         1 => 'admin',
         2 => 'financiero',
@@ -184,10 +178,18 @@ function loginSuccess($user) {
         echo "Tipo de usuario desconocido.";
         exit();
     }
-    $base = function_exists('appBasePath') ? appBasePath() : '';
-    $routerBase = ($base === '/') ? '' : rtrim($base, '/');
+    $routerBase = function_exists('appRouterBase')
+        ? appRouterBase()
+        : (function_exists('appAssetBase') ? appAssetBase() : '');
+    $routerBase = rtrim($routerBase, '/');
     header('Location: ' . $routerBase . '/index.php?r=dashboard&mod=' . $mod);
     exit();
 }
 
 include __DIR__ . "/app/Views/auth/login.php";
+
+
+
+
+
+

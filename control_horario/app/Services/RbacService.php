@@ -61,8 +61,10 @@ class RbacService
 
     public function dashboardForModule(string $module): string
     {
-        $base = function_exists('appBasePath') ? appBasePath() : '';
-        $routerBase = ($base === '/') ? '' : rtrim($base, '/');
+        $base = function_exists('appRouterBase')
+            ? appRouterBase()
+            : (function_exists('appAssetBase') ? appAssetBase() : '');
+        $routerBase = rtrim($base, '/');
         return $routerBase . '/index.php?r=dashboard&mod=' . $module;
     }
 

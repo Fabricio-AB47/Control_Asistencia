@@ -1,6 +1,7 @@
-<?php
+﻿<?php
 $base = $base ?? (function_exists('appBasePath') ? appBasePath() : '');
 $baseUrl = ($base === '/' || $base === '') ? '' : rtrim($base, '/');
+$routerBase = function_exists('appRouterBase') ? rtrim(appRouterBase(), '/') : $baseUrl;
 $mod  = $module ?? 'ti';
 ?>
 <style nonce="<?= htmlspecialchars($cspNonce ?? '', ENT_QUOTES, 'UTF-8'); ?>">
@@ -14,15 +15,15 @@ $mod  = $module ?? 'ti';
   <div class="container">
     <h3>Panel de <?= htmlspecialchars(ucfirst($mod), ENT_QUOTES, 'UTF-8') ?></h3>
     <?php if ($mod !== 'admin'): ?>
-      <p>Accesos rápidos del módulo.</p>
+      <p>Accesos r├ípidos del m├│dulo.</p>
       <div class="buttons">
-        <a class="btn" href="<?= $baseUrl ?>/index.php?r=control&mod=<?= htmlspecialchars($mod,ENT_QUOTES,'UTF-8') ?>">🕒 Registro de Control Horario</a>
-        <a class="btn" href="<?= $baseUrl ?>/index.php?r=reporte&mod=<?= htmlspecialchars($mod,ENT_QUOTES,'UTF-8') ?>">📄 Reporte de Timbres</a>
+        <a class="btn" href="<?= $routerBase ?>/index.php?r=control&mod=<?= htmlspecialchars($mod,ENT_QUOTES,'UTF-8') ?>">≡ƒòÆ Registro de Control Horario</a>
+        <a class="btn" href="<?= $routerBase ?>/index.php?r=reporte&mod=<?= htmlspecialchars($mod,ENT_QUOTES,'UTF-8') ?>">≡ƒôä Reporte de Timbres</a>
       </div>
     <?php else: ?>
-      <p>Bienvenido al Panel de Administración. Usa el menú superior para navegar (Roles, Usuarios, Horarios y Reporte General).</p>
+      <p>Bienvenido al Panel de Administraci├│n. Usa el men├║ superior para navegar (Roles, Usuarios, Horarios y Reporte General).</p>
       <section class="dash-section">
-        <h4 class="dash-title">Distribución de llegadas (a tiempo/temprano vs atrasos)</h4>
+        <h4 class="dash-title">Distribuci├│n de llegadas (a tiempo/temprano vs atrasos)</h4>
         <?php $hoy=(new DateTime('now', new DateTimeZone('America/Guayaquil')))->format('Y-m-d'); $ini=(new DateTime('first day of this month'))->format('Y-m-d'); ?>
         <form id="form-stats" class="filter chart-actions dash-form" method="get" onsubmit="return false;">
           <label class="filter__field">Desde <input type="date" id="f-desde" value="<?= htmlspecialchars($ini,ENT_QUOTES,'UTF-8') ?>"></label>
@@ -44,7 +45,7 @@ $mod  = $module ?? 'ti';
         <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
         <script nonce="<?= htmlspecialchars($cspNonce ?? '', ENT_QUOTES, 'UTF-8'); ?>">
           (function(){
-            const BASE = <?= json_encode($baseUrl) ?>;
+            const BASE = <?= json_encode($routerBase) ?>;
             const ctx = document.getElementById('chart-arrivals').getContext('2d');
             let chart = null;
             function render(data){
@@ -70,7 +71,7 @@ $mod  = $module ?? 'ti';
                 const res = await fetch(url, {credentials:'same-origin'}); const j = await res.json();
                 if (!j || !j.ok) return; 
                 const rows = j.data||[];
-                let html = '<div class="table-container"><table class="table"><thead class="table__head"><tr><th>Fecha</th><th>Usuario</th><th>Rol</th><th>Hora prog.</th><th>Ingreso</th><th>Estado</th><th>Dirección</th></tr></thead><tbody>';
+                let html = '<div class="table-container"><table class="table"><thead class="table__head"><tr><th>Fecha</th><th>Usuario</th><th>Rol</th><th>Hora prog.</th><th>Ingreso</th><th>Estado</th><th>Direcci├│n</th></tr></thead><tbody>';
                 for (const r of rows){
                   const link = (r.lat_in&&r.lon_in) ? ` <a class=\"js-map\" target=\"_blank\" rel=\"noopener noreferrer\" href=\"https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(r.lat_in+','+r.lon_in)}\" data-lat=\"${r.lat_in}\" data-lon=\"${r.lon_in}\">[Mapa]</a>` : '';
                   html += `<tr><td>${r.fecha||''}</td><td>${r.usuario||''}</td><td>${r.rol||''}</td><td>${r.hora_prog_in||''}</td><td>${r.hora_ingreso||''}</td><td>${r.estado_ingreso||''}</td><td>${(r.dir_in||'')}${link}</td></tr>`;
@@ -100,3 +101,7 @@ $mod  = $module ?? 'ti';
     <?php endif; ?>
   </div>
 </main>
+
+
+
+

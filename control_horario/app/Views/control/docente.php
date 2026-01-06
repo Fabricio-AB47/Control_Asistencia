@@ -2,6 +2,7 @@
 // Vista de control para Docentes
 $mod = $module ?? 'academico';
 $base = $base ?? (function_exists('appBasePath') ? appBasePath() : '');
+$routerBase = function_exists('appRouterBase') ? appRouterBase() : (($base === '/' || $base === '') ? '' : rtrim($base, '/'));
 ?>
 <style nonce="<?= htmlspecialchars($cspNonce ?? '', ENT_QUOTES, 'UTF-8'); ?>">
   .doc-buttons { display:flex; flex-direction:column; gap:12px; }
@@ -45,7 +46,7 @@ $base = $base ?? (function_exists('appBasePath') ? appBasePath() : '');
   const MSG   = document.getElementById('geo-msg');
   const CSRF  = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
   const MOD = <?= json_encode($mod) ?>;
-  const BASE = <?= json_encode($base) ?>;
+  const BASE = <?= json_encode($routerBase) ?>;
   const ENDPOINTS = {
     docenteIngreso: `${BASE}/index.php?r=registrar&mod=${MOD}&action=docente_ingreso`,
     docenteFin:     `${BASE}/index.php?r=registrar&mod=${MOD}&action=docente_fin`

@@ -1,6 +1,7 @@
 <?php
 // Espera: $module (ti, financiero, admisiones, academico, bienestar), $redirect
 $mod = $module ?? 'ti';
+$routerBase = function_exists('appRouterBase') ? appRouterBase() : (($base === '/' || $base === '') ? '' : rtrim(($base ?? ''), '/'));
 ?>
 
 <style nonce="<?= htmlspecialchars($cspNonce ?? '', ENT_QUOTES, 'UTF-8'); ?>">
@@ -68,7 +69,7 @@ $mod = $module ?? 'ti';
 
   // Endpoints por módulo (mantiene los PHP actuales)
 const MOD = <?= json_encode($mod) ?>;
-const BASE = <?= json_encode(($base === '/' || $base === '') ? '' : rtrim($base, '/')) ?>;
+const BASE = <?= json_encode($routerBase) ?>;
   const ENDPOINTS = {
     ingreso:         `${BASE}/index.php?r=registrar&mod=${MOD}&action=ingreso`,
     salidaAlmuerzo:  `${BASE}/index.php?r=registrar&mod=${MOD}&action=salida_almuerzo`,

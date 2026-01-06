@@ -50,8 +50,8 @@ header('Expires: 0');
 
 // Redirige al login (ruta basada en .env)
 // Normaliza para evitar dobles slashes: '/' -> '' para concatenar
-$base = appBasePath();
-$base = ($base === '/' || $base === '') ? '' : rtrim($base, '/');
+$base = function_exists('appRouterBase') ? appRouterBase() : (function_exists('appAssetBase') ? appAssetBase() : appBasePath());
+$base = rtrim($base, '/');
 $REDIRECT_PATH = $base . '/index.php';
 header('Location: ' . $REDIRECT_PATH);
 exit;

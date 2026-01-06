@@ -1,8 +1,7 @@
 <?php
-  $base = function_exists('appBasePath') ? appBasePath() : '';
-  // normaliza para evitar doble slash si base es "/"
-  $assetBase = ($base === '/') ? '' : rtrim($base, '/');
-  $formAction = $assetBase . '/index.php';
+  $assetBase = function_exists('appAssetBase') ? appAssetBase() : ((function_exists('appBasePath') ? appBasePath() : ''));
+  $routerBase = function_exists('appRouterBase') ? appRouterBase() : $assetBase;
+  $formAction = rtrim($routerBase, '/') . '/index.php';
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -15,7 +14,7 @@
 <body>
   <header class="header">
     <div class="header__brand">
-      <img src="<?= htmlspecialchars($assetBase . '/img/intec.png', ENT_QUOTES, 'UTF-8') ?>" alt="Logo Intec" class="logo">
+      <img src="<?= htmlspecialchars($assetBase . '/build/img/intec.png', ENT_QUOTES, 'UTF-8') ?>" alt="Logo Intec" class="logo">
     </div>
   </header>
   <main class="login-main">

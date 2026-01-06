@@ -65,9 +65,10 @@ if (!function_exists('app_redirect_login')) {
      * Cuando la sesión expiró, marca un header para que el frontend pueda detectarlo.
      */
     function app_redirect_login(bool $expired = false): void {
-        $base = function_exists('appBasePath') ? appBasePath() : '';
-        $base = ($base === '/' || $base === '') ? '' : rtrim($base, '/');
-        $target = $base . '/index.php';
+        $base = function_exists('appRouterBase')
+            ? appRouterBase()
+            : (function_exists('appAssetBase') ? appAssetBase() : '');
+        $target = rtrim($base, '/') . '/index.php';
         if ($expired && !headers_sent()) {
             header('X-Session-Expired: 1');
         }
