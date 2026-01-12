@@ -118,6 +118,7 @@ class ReporteController extends BaseController
 
         try { $db = conexion(); }
         catch (\RuntimeException $e) { http_response_code(500); echo 'No se pudo conectar: '.htmlspecialchars($e->getMessage(),ENT_QUOTES,'UTF-8'); return; }
+        $schema = (function_exists('isMssql') && isMssql()) ? (dbSchema() . '.') : '';
         $svc = new \App\Services\ReporteService($db);
         $rows = $svc->timbresAll($desde, $hasta, $qName, $fRol);
 
@@ -126,7 +127,7 @@ class ReporteController extends BaseController
             return;
         }
 
-        $rolesList = ($db->query("SELECT detalle_tp_user FROM tipo_usuario WHERE id_tp_user <> 1 ORDER BY detalle_tp_user"))->fetchAll(\PDO::FETCH_COLUMN) ?: [];
+        $rolesList = ($db->query("SELECT detalle_tp_user FROM {$schema}tipo_usuario WHERE id_tp_user <> 1 ORDER BY detalle_tp_user"))->fetchAll(\PDO::FETCH_COLUMN) ?: [];
 
         $rbac = new \App\Services\RbacService();
         $this->render('reporte/todos', [

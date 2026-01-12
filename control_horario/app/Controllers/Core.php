@@ -117,7 +117,10 @@ function conexion(): \PDO {
     $db   = getEnvVar('DB_NAME', $fileEnv, 'db_name');
     $user = getEnvVar('DB_USER', $fileEnv, 'db_user');
     $pass = getEnvVar('DB_PASSWORD', $fileEnv, 'db_password');
-    $port = getEnvVar('DB_PORT', $fileEnv, 'db_port') ?? '3306';
+    $port = getEnvVar('DB_PORT', $fileEnv, 'db_port');
+    $engine = strtolower(trim(getEnvVar('DB_ENGINE', $fileEnv, 'db_engine') ?? 'mysql'));
+    $odbcDriver = getEnvVar('DB_ODBC_DRIVER', $fileEnv, 'db_odbc_driver');
+    $odbcExtra = getEnvVar('DB_ODBC_EXTRA_PARAMS', $fileEnv, 'db_odbc_extra_params') ?? '';
     $debug = (getEnvVar('APP_DEBUG', $fileEnv, 'app_debug') ?? '0') === '1';
     if (!$host || !$db || !$user) {
         $msg = 'Faltan variables de conexión (DB_HOST/DB_NAME/DB_USER) en .env de la raíz.';
@@ -126,7 +129,23 @@ function conexion(): \PDO {
         }
         throw new \RuntimeException($msg);
     }
-    $dsn = "mysql:host={$host};port={$port};dbname={$db};charset=utf8mb4";
+    if ($engine === 'mssql' || $engine === 'sqlsrv') {
+        $port = $port ?? '1433';
+        $extra = trim($odbcExtra);
+        $extra = $extra !== '' ? ';' . $extra : '';
+        if (extension_loaded('pdo_sqlsrv')) {
+            $dsn = "sqlsrv:Server={$host},{$port};Database={$db}{$extra}";
+        } else {
+            $driver = trim((string)($odbcDriver ?: 'ODBC Driver 17 for SQL Server'));
+            if ($driver !== '' && $driver[0] !== '{') {
+                $driver = '{' . $driver . '}';
+            }
+            $dsn = "odbc:Driver={$driver};Server={$host},{$port};Database={$db}{$extra}";
+        }
+    } else {
+        $port = $port ?? '3306';
+        $dsn = "mysql:host={$host};port={$port};dbname={$db};charset=utf8mb4";
+    }
     try {
         $pdo = new \PDO($dsn, $user, $pass, [
             \PDO::ATTR_ERRMODE            => \PDO::ERRMODE_EXCEPTION,
@@ -142,6 +161,36 @@ function conexion(): \PDO {
         }
         throw new \RuntimeException('Error al conectar a la base de datos. Verifica credenciales en .env');
     }
+}
+
+function dbEngine(): string {
+    static $cached = null;
+    if ($cached !== null) return $cached;
+    $fileEnv = loadDotEnv();
+    $engine = strtolower(trim(getEnvVar('DB_ENGINE', $fileEnv, 'db_engine') ?? 'mysql'));
+    if ($engine === '') $engine = 'mysql';
+    return $cached = $engine;
+}
+
+function isMssql(): bool {
+    $engine = dbEngine();
+    return $engine === 'mssql' || $engine === 'sqlsrv';
+}
+
+function dbSchema(): string {
+    $fileEnv = loadDotEnv();
+    $schema = getEnvVar('DB_SCHEMA', $fileEnv, 'db_schema');
+    if (!$schema) {
+        $schema = getEnvVar('DB_NAME', $fileEnv, 'db_name') ?? 'dbo';
+    }
+    return trim((string)$schema);
+}
+
+function dbTable(string $table): string {
+    if (!isMssql()) return $table;
+    $schema = dbSchema();
+    if ($schema === '') return $table;
+    return $schema . '.' . $table;
 }
 
 /**

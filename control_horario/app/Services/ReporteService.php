@@ -6,22 +6,29 @@ use PDO;
 class ReporteService
 {
     private PDO $db;
+    private string $schemaPrefix;
     public function __construct(PDO $db)
     {
         $this->db = $db;
         $this->db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        $this->schemaPrefix = \isMssql() ? (\dbSchema() . '.') : '';
     }
 
     public function horarioProgramaUsuario(int $uid): array
     {
-        $stmt = $this->db->prepare(
-            "SELECT u.id_tp_user, he.hora_ingreso_personal, hs.hora_salida_personal
-               FROM usuario u
-          LEFT JOIN horario_entrada_personal he ON he.id_usuario = u.id_usuario AND he.id_tp_user = u.id_tp_user
-          LEFT JOIN horario_salida_personal  hs ON hs.id_usuario = u.id_usuario AND hs.id_tp_user = u.id_tp_user
+        $sql = \isMssql()
+            ? "SELECT TOP 1 u.id_tp_user, he.hora_ingreso_personal, hs.hora_salida_personal
+               FROM {$this->schemaPrefix}usuario u
+          LEFT JOIN {$this->schemaPrefix}horario_entrada_personal he ON he.id_usuario = u.id_usuario AND he.id_tp_user = u.id_tp_user
+          LEFT JOIN {$this->schemaPrefix}horario_salida_personal  hs ON hs.id_usuario = u.id_usuario AND hs.id_tp_user = u.id_tp_user
+              WHERE u.id_usuario = ?"
+            : "SELECT u.id_tp_user, he.hora_ingreso_personal, hs.hora_salida_personal
+               FROM {$this->schemaPrefix}usuario u
+          LEFT JOIN {$this->schemaPrefix}horario_entrada_personal he ON he.id_usuario = u.id_usuario AND he.id_tp_user = u.id_tp_user
+          LEFT JOIN {$this->schemaPrefix}horario_salida_personal  hs ON hs.id_usuario = u.id_usuario AND hs.id_tp_user = u.id_tp_user
               WHERE u.id_usuario = ?
-              LIMIT 1"
-        );
+              LIMIT 1";
+        $stmt = $this->db->prepare($sql);
         $stmt->execute([$uid]);
         $cfg = $stmt->fetch(PDO::FETCH_ASSOC) ?: [];
         return [
@@ -49,25 +56,25 @@ class ReporteService
             sa.hora_salida, es.detalle_salida                    AS estado_salida,
             sa.latitud   AS lat_out, sa.longitud AS lon_out, sa.direccion  AS dir_out
 
-        FROM fecha_registro fr
-        LEFT JOIN horario_ingreso hi
+        FROM {$this->schemaPrefix}fecha_registro fr
+        LEFT JOIN {$this->schemaPrefix}horario_ingreso hi
                ON hi.id_usuario = fr.id_usuario AND hi.id_fecha_registro = fr.id_fecha_registro
-        LEFT JOIN estado_ingreso ei
+        LEFT JOIN {$this->schemaPrefix}estado_ingreso ei
                ON ei.id_estado_ingreso = hi.id_estado_ingreso
 
-        LEFT JOIN horario_sl_almuerzo sla
+        LEFT JOIN {$this->schemaPrefix}horario_sl_almuerzo sla
                ON sla.id_usuario = fr.id_usuario AND sla.id_fecha_registro = fr.id_fecha_registro
-        LEFT JOIN estado_salida_almuerzo esa
+        LEFT JOIN {$this->schemaPrefix}estado_salida_almuerzo esa
                ON esa.id_estado_salida_almuerzo = sla.id_estado_salida_almuerzo
 
-        LEFT JOIN horario_rt_almuerzo rta
+        LEFT JOIN {$this->schemaPrefix}horario_rt_almuerzo rta
                ON rta.id_usuario = fr.id_usuario AND rta.id_fecha_registro = fr.id_fecha_registro
-        LEFT JOIN estado_retorno_almuerzo era
+        LEFT JOIN {$this->schemaPrefix}estado_retorno_almuerzo era
                ON era.id_estado_retorno_almuerzo = rta.id_estado_retorno_almuerzo
 
-        LEFT JOIN horario_salida sa
+        LEFT JOIN {$this->schemaPrefix}horario_salida sa
                ON sa.id_usuario = fr.id_usuario AND sa.id_fecha_registro = fr.id_fecha_registro
-        LEFT JOIN estado_salida es
+        LEFT JOIN {$this->schemaPrefix}estado_salida es
                ON es.id_estado_salida = sa.id_estado_salida
 
         WHERE fr.id_usuario = :uid
@@ -109,30 +116,30 @@ class ReporteService
             es.detalle_salida                                    AS estado_salida,
             sa.latitud   AS lat_out, sa.longitud AS lon_out, sa.direccion  AS dir_out
 
-        FROM fecha_registro fr
-        INNER JOIN usuario u ON u.id_usuario = fr.id_usuario
-        LEFT JOIN tipo_usuario tu ON tu.id_tp_user = u.id_tp_user
-        LEFT JOIN horario_entrada_personal he ON he.id_usuario = u.id_usuario AND he.id_tp_user = u.id_tp_user
-        LEFT JOIN horario_salida_personal  hs ON hs.id_usuario = u.id_usuario AND hs.id_tp_user = u.id_tp_user
+        FROM {$this->schemaPrefix}fecha_registro fr
+        INNER JOIN {$this->schemaPrefix}usuario u ON u.id_usuario = fr.id_usuario
+        LEFT JOIN {$this->schemaPrefix}tipo_usuario tu ON tu.id_tp_user = u.id_tp_user
+        LEFT JOIN {$this->schemaPrefix}horario_entrada_personal he ON he.id_usuario = u.id_usuario AND he.id_tp_user = u.id_tp_user
+        LEFT JOIN {$this->schemaPrefix}horario_salida_personal  hs ON hs.id_usuario = u.id_usuario AND hs.id_tp_user = u.id_tp_user
 
-        LEFT JOIN horario_ingreso hi
+        LEFT JOIN {$this->schemaPrefix}horario_ingreso hi
                ON hi.id_usuario = fr.id_usuario AND hi.id_fecha_registro = fr.id_fecha_registro
-        LEFT JOIN estado_ingreso ei
+        LEFT JOIN {$this->schemaPrefix}estado_ingreso ei
                ON ei.id_estado_ingreso = hi.id_estado_ingreso
 
-        LEFT JOIN horario_sl_almuerzo sla
+        LEFT JOIN {$this->schemaPrefix}horario_sl_almuerzo sla
                ON sla.id_usuario = fr.id_usuario AND sla.id_fecha_registro = fr.id_fecha_registro
-        LEFT JOIN estado_salida_almuerzo esa
+        LEFT JOIN {$this->schemaPrefix}estado_salida_almuerzo esa
                ON esa.id_estado_salida_almuerzo = sla.id_estado_salida_almuerzo
 
-        LEFT JOIN horario_rt_almuerzo rta
+        LEFT JOIN {$this->schemaPrefix}horario_rt_almuerzo rta
                ON rta.id_usuario = fr.id_usuario AND rta.id_fecha_registro = fr.id_fecha_registro
-        LEFT JOIN estado_retorno_almuerzo era
+        LEFT JOIN {$this->schemaPrefix}estado_retorno_almuerzo era
                ON era.id_estado_retorno_almuerzo = rta.id_estado_retorno_almuerzo
 
-        LEFT JOIN horario_salida sa
+        LEFT JOIN {$this->schemaPrefix}horario_salida sa
                ON sa.id_usuario = fr.id_usuario AND sa.id_fecha_registro = fr.id_fecha_registro
-        LEFT JOIN estado_salida es
+        LEFT JOIN {$this->schemaPrefix}estado_salida es
                ON es.id_estado_salida = sa.id_estado_salida
 
         WHERE fr.fecha_ingreso BETWEEN :desde AND :hasta
@@ -160,21 +167,32 @@ class ReporteService
 
     public function timbresDocente(int $uid, string $desde, string $hasta): array
     {
+        if (\isMssql()) {
+            $ingSub = "SELECT STRING_AGG(CONCAT(ISNULL(hi.hora_ing_doc,''),'|',ISNULL(hi.latitud,''),'|',ISNULL(hi.longitud,''),'|',ISNULL(hi.direccion,'')),';;') WITHIN GROUP (ORDER BY hi.hora_ing_doc)
+              FROM {$this->schemaPrefix}horario_docente_ingreso_1 hi
+              WHERE hi.id_usuario = fr.id_usuario AND hi.id_fecha_registro = fr.id_fecha_registro";
+            $salSub = "SELECT STRING_AGG(CONCAT(ISNULL(hf.hora_sl_doc,''),'|',ISNULL(hf.latitud,''),'|',ISNULL(hf.longitud,''),'|',ISNULL(hf.direccion,'')),';;') WITHIN GROUP (ORDER BY hf.hora_sl_doc)
+              FROM {$this->schemaPrefix}horario_fin_docente_1 hf
+              WHERE hf.id_usuario = fr.id_usuario AND hf.id_fecha_registro = fr.id_fecha_registro";
+        } else {
+            $ingSub = "SELECT GROUP_CONCAT(CONCAT(IFNULL(hi.hora_ing_doc,''''),'|',IFNULL(hi.latitud,''''),'|',IFNULL(hi.longitud,''''),'|',IFNULL(hi.direccion,'''')) ORDER BY hi.hora_ing_doc SEPARATOR ';;')
+              FROM {$this->schemaPrefix}horario_docente_ingreso_1 hi
+              WHERE hi.id_usuario = fr.id_usuario AND hi.id_fecha_registro = fr.id_fecha_registro";
+            $salSub = "SELECT GROUP_CONCAT(CONCAT(IFNULL(hf.hora_sl_doc,''''),'|',IFNULL(hf.latitud,''''),'|',IFNULL(hf.longitud,''''),'|',IFNULL(hf.direccion,'''')) ORDER BY hf.hora_sl_doc SEPARATOR ';;')
+              FROM {$this->schemaPrefix}horario_fin_docente_1 hf
+              WHERE hf.id_usuario = fr.id_usuario AND hf.id_fecha_registro = fr.id_fecha_registro";
+        }
         $sql = "
         SELECT
             fr.id_fecha_registro,
             fr.fecha_ingreso AS fecha,
             (
-              SELECT GROUP_CONCAT(CONCAT(IFNULL(hi.hora_ing_doc,''''),'|',IFNULL(hi.latitud,''''),'|',IFNULL(hi.longitud,''''),'|',IFNULL(hi.direccion,'''')) ORDER BY hi.hora_ing_doc SEPARATOR ';;')
-              FROM horario_docente_ingreso_1 hi
-              WHERE hi.id_usuario = fr.id_usuario AND hi.id_fecha_registro = fr.id_fecha_registro
+              {$ingSub}
             ) AS ingresos,
             (
-              SELECT GROUP_CONCAT(CONCAT(IFNULL(hf.hora_sl_doc,''''),'|',IFNULL(hf.latitud,''''),'|',IFNULL(hf.longitud,''''),'|',IFNULL(hf.direccion,'''')) ORDER BY hf.hora_sl_doc SEPARATOR ';;')
-              FROM horario_fin_docente_1 hf
-              WHERE hf.id_usuario = fr.id_usuario AND hf.id_fecha_registro = fr.id_fecha_registro
+              {$salSub}
             ) AS salidas
-        FROM fecha_registro fr
+        FROM {$this->schemaPrefix}fecha_registro fr
         WHERE fr.id_usuario = :uid
           AND fr.fecha_ingreso BETWEEN :desde AND :hasta
         ORDER BY fr.fecha_ingreso DESC";

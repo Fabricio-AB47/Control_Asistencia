@@ -22,14 +22,20 @@ class AdminController extends BaseController
         }
     }
 
+    private function dbSchemaPrefix(): string
+    {
+        return \isMssql() ? (\dbSchema() . '.') : '';
+    }
+
     public function rolesIndex(): void
     {
         $this->guard();
         $db = \conexion();
+        $schema = $this->dbSchemaPrefix();
         // Crear tabla si no existe (defensivo; opcional)
         // $db->exec("CREATE TABLE IF NOT EXISTS tipo_usuario (id_tp_user INT AUTO_INCREMENT PRIMARY KEY, detalle_tp_user VARCHAR(100) UNIQUE)");
 
-        $stmt = $db->query('SELECT id_tp_user, detalle_tp_user FROM tipo_usuario ORDER BY id_tp_user');
+        $stmt = $db->query("SELECT id_tp_user, detalle_tp_user FROM {$schema}tipo_usuario ORDER BY id_tp_user");
         $roles = $stmt->fetchAll() ?: [];
 
         $nombre   = $_SESSION['nombre']   ?? 'Usuario';
@@ -58,18 +64,20 @@ class AdminController extends BaseController
             $this->redirectWith('Detalle del rol requerido', true);
             return;
         }
+        $schema = $this->dbSchemaPrefix();
         // Normalizar: mayúsculas y sin acentos
         $norm = strtr($nombre, ['á'=>'a','é'=>'e','í'=>'i','ó'=>'o','ú'=>'u','ñ'=>'n','Á'=>'A','É'=>'E','Í'=>'I','Ó'=>'O','Ú'=>'U','Ñ'=>'N']);
         $norm = strtoupper($norm);
         try {
             $db = \conexion();
+            $schema = $this->dbSchemaPrefix();
             // Evitar duplicados
-            $s = $db->prepare('SELECT 1 FROM tipo_usuario WHERE UPPER(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(detalle_tp_user, "á", "a"), "é", "e"), "í", "i"), "ó", "o"), "ú", "u"), "ñ","n")) = ?');
+            $s = $db->prepare("SELECT 1 FROM {$schema}tipo_usuario WHERE UPPER(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(detalle_tp_user, \"á\", \"a\"), \"é\", \"e\"), \"í\", \"i\"), \"ó\", \"o\"), \"ú\", \"u\"), \"ñ\",\"n\")) = ?");
             $s->execute([$norm]);
             if ($s->fetch()) { $this->redirectWith('El rol ya existe.', true); return; }
 
             $toInsert = function_exists('mb_strtoupper') ? mb_strtoupper($nombre,'UTF-8') : strtoupper($nombre);
-            $ins = $db->prepare('INSERT INTO tipo_usuario (detalle_tp_user) VALUES (?)');
+            $ins = $db->prepare("INSERT INTO {$schema}tipo_usuario (detalle_tp_user) VALUES (?)");
             $ins->execute([$toInsert]);
             $this->redirectWith('Rol creado correctamente.');
         } catch (\Throwable $e) {
@@ -91,11 +99,12 @@ class AdminController extends BaseController
     {
         $this->guard();
         $db = \conexion();
-        $q = $db->query('SELECT u.id_usuario, u.primer_nombre, u.segundo_nombre, u.primer_apellido, u.segundo_apellido, u.cedula, u.correo, t.detalle_tp_user AS rol
-                         FROM usuario u LEFT JOIN tipo_usuario t ON t.id_tp_user = u.id_tp_user
-                         ORDER BY u.primer_apellido, u.primer_nombre');
+        $schema = $this->dbSchemaPrefix();
+        $q = $db->query("SELECT u.id_usuario, u.primer_nombre, u.segundo_nombre, u.primer_apellido, u.segundo_apellido, u.cedula, u.correo, t.detalle_tp_user AS rol
+                         FROM {$schema}usuario u LEFT JOIN {$schema}tipo_usuario t ON t.id_tp_user = u.id_tp_user
+                         ORDER BY u.primer_apellido, u.primer_nombre");
         $usuarios = $q->fetchAll() ?: [];
-        $roles = ($db->query('SELECT id_tp_user, detalle_tp_user FROM tipo_usuario ORDER BY id_tp_user'))->fetchAll() ?: [];
+        $roles = ($db->query("SELECT id_tp_user, detalle_tp_user FROM {$schema}tipo_usuario ORDER BY id_tp_user"))->fetchAll() ?: [];
         $rbac = new RbacService();
         $this->render('admin/users', [
             'title'=>'Usuarios', 'module'=>'admin',
@@ -125,10 +134,11 @@ class AdminController extends BaseController
         if (!filter_var($correo, FILTER_VALIDATE_EMAIL)) { $this->redirectUsers('Correo inválido.', true); return; }
         try {
             $db = conexion();
+            $schema = $this->dbSchemaPrefix();
 
             // Validación principal: máximo 2 roles/usuarios por persona (misma cédula + mismo correo)
             $correoL = strtolower($correo);
-            $sPersona = $db->prepare('SELECT id_tp_user FROM usuario WHERE cedula = ? AND correo = ?');
+            $sPersona = $db->prepare("SELECT id_tp_user FROM {$schema}usuario WHERE cedula = ? AND correo = ?");
             $sPersona->execute([$cedula, $correoL]);
             $rolesPersona = array_map('intval', $sPersona->fetchAll(PDO::FETCH_COLUMN) ?: []);
 
@@ -146,13 +156,13 @@ class AdminController extends BaseController
             // --- Lógica previa se mantiene como respaldo ---
             // Permitir correo y cédula repetidos, pero máximo 2 roles distintos por persona y sin repetir rol
             $correoL = strtolower($correo);
-            $s = $db->prepare('SELECT id_tp_user FROM usuario WHERE cedula = ?');
+            $s = $db->prepare("SELECT id_tp_user FROM {$schema}usuario WHERE cedula = ?");
             $s->execute([$cedula]);
             $roles = array_map('intval', $s->fetchAll(PDO::FETCH_COLUMN) ?: []);
             if (in_array($rolId, $roles, true)) { $this->redirectUsers('La persona ya tiene ese rol.', true); return; }
 
             // Validar máximo 2 usuarios con la misma cédula y correo
-            $s2 = $db->prepare('SELECT COUNT(*) FROM usuario WHERE cedula = ? AND correo = ?');
+            $s2 = $db->prepare("SELECT COUNT(*) FROM {$schema}usuario WHERE cedula = ? AND correo = ?");
             $s2->execute([$cedula, $correoL]);
             $countPersona = (int)($s2->fetchColumn() ?: 0);
             if ($countPersona >= 2) { $this->redirectUsers('Máximo 2 usuarios con la misma cédula y correo.', true); return; }
@@ -166,7 +176,7 @@ class AdminController extends BaseController
             $apU      = $up($apellido);
             $sApU     = $up($segundoApellido);
             $correoL  = strtolower($correo);
-            $ins = $db->prepare('INSERT INTO usuario (primer_apellido, segundo_apellido, primer_nombre, segundo_nombre, cedula, correo, pwd, id_tp_user) VALUES (?,?,?,?,?,?,?,?)');
+            $ins = $db->prepare("INSERT INTO {$schema}usuario (primer_apellido, segundo_apellido, primer_nombre, segundo_nombre, cedula, correo, pwd, id_tp_user) VALUES (?,?,?,?,?,?,?,?)");
             $ins->execute([$apU, $sApU, $nombreU, $sNombreU, $cedula, $correoL, $hash, $rolId]);
             $this->redirectUsers('Usuario creado correctamente.');
         } catch (\PDOException $e) {
@@ -198,14 +208,21 @@ class AdminController extends BaseController
     {
         $this->guard();
         $db = \conexion();
-        $usuarios = ($db->query('SELECT id_usuario, CONCAT_WS(" ", primer_nombre, primer_apellido) AS nombre FROM usuario ORDER BY primer_apellido, primer_nombre'))->fetchAll() ?: [];
+        $schema = $this->dbSchemaPrefix();
+        $usuarios = ($db->query("SELECT id_usuario, CONCAT_WS(\" \", primer_nombre, primer_apellido) AS nombre FROM {$schema}usuario ORDER BY primer_apellido, primer_nombre"))->fetchAll() ?: [];
         $uidSel = (int)($_GET['uid'] ?? 0);
         $currIn = $currOut = '';
         if ($uidSel>0) {
-            $si = $db->prepare('SELECT hora_ingreso_personal FROM horario_entrada_personal WHERE id_usuario=? LIMIT 1');
+            $sql = \isMssql()
+                ? "SELECT TOP 1 hora_ingreso_personal FROM {$schema}horario_entrada_personal WHERE id_usuario=?"
+                : "SELECT hora_ingreso_personal FROM {$schema}horario_entrada_personal WHERE id_usuario=? LIMIT 1";
+            $si = $db->prepare($sql);
             $si->execute([$uidSel]);
             $currIn = (string)($si->fetchColumn() ?: '');
-            $so = $db->prepare('SELECT hora_salida_personal FROM horario_salida_personal WHERE id_usuario=? LIMIT 1');
+            $sql = \isMssql()
+                ? "SELECT TOP 1 hora_salida_personal FROM {$schema}horario_salida_personal WHERE id_usuario=?"
+                : "SELECT hora_salida_personal FROM {$schema}horario_salida_personal WHERE id_usuario=? LIMIT 1";
+            $so = $db->prepare($sql);
             $so->execute([$uidSel]);
             $currOut = (string)($so->fetchColumn() ?: '');
         }
@@ -233,27 +250,30 @@ class AdminController extends BaseController
         try {
             $db = \conexion();
             // obtener rol del usuario para guardar id_tp_user en tablas de horario
-            $s = $db->prepare('SELECT id_tp_user FROM usuario WHERE id_usuario=? LIMIT 1');
+            $sql = \isMssql()
+                ? "SELECT TOP 1 id_tp_user FROM {$schema}usuario WHERE id_usuario=?"
+                : "SELECT id_tp_user FROM {$schema}usuario WHERE id_usuario=? LIMIT 1";
+            $s = $db->prepare($sql);
             $s->execute([$uid]);
             $idTp = (int)($s->fetchColumn() ?: 0);
             // Entrada: upsert
-            $q = $db->prepare('SELECT id_usuario FROM horario_entrada_personal WHERE id_usuario=?');
+            $q = $db->prepare("SELECT id_usuario FROM {$schema}horario_entrada_personal WHERE id_usuario=?");
             $q->execute([$uid]);
             if ($q->fetch()) {
-                $u = $db->prepare('UPDATE horario_entrada_personal SET hora_ingreso_personal=?, id_tp_user=? WHERE id_usuario=?');
+                $u = $db->prepare("UPDATE {$schema}horario_entrada_personal SET hora_ingreso_personal=?, id_tp_user=? WHERE id_usuario=?");
                 $u->execute([$horaIn, $idTp, $uid]);
             } else {
-                $i = $db->prepare('INSERT INTO horario_entrada_personal (id_tp_user, hora_ingreso_personal, id_usuario) VALUES (?,?,?)');
+                $i = $db->prepare("INSERT INTO {$schema}horario_entrada_personal (id_tp_user, hora_ingreso_personal, id_usuario) VALUES (?,?,?)");
                 $i->execute([$idTp, $horaIn, $uid]);
             }
             // Salida: upsert
-            $q = $db->prepare('SELECT id_usuario FROM horario_salida_personal WHERE id_usuario=?');
+            $q = $db->prepare("SELECT id_usuario FROM {$schema}horario_salida_personal WHERE id_usuario=?");
             $q->execute([$uid]);
             if ($q->fetch()) {
-                $u = $db->prepare('UPDATE horario_salida_personal SET hora_salida_personal=?, id_tp_user=? WHERE id_usuario=?');
+                $u = $db->prepare("UPDATE {$schema}horario_salida_personal SET hora_salida_personal=?, id_tp_user=? WHERE id_usuario=?");
                 $u->execute([$horaOut, $idTp, $uid]);
             } else {
-                $i = $db->prepare('INSERT INTO horario_salida_personal (id_tp_user, hora_salida_personal, id_usuario) VALUES (?,?,?)');
+                $i = $db->prepare("INSERT INTO {$schema}horario_salida_personal (id_tp_user, hora_salida_personal, id_usuario) VALUES (?,?,?)");
                 $i->execute([$idTp, $horaOut, $uid]);
             }
             $this->redirectSchedules('Horarios actualizados.');
@@ -283,13 +303,17 @@ class AdminController extends BaseController
         if ($desde > $hasta) { [$desde, $hasta] = [$hasta, $desde]; }
         try {
             $db = \conexion();
+            $schema = $this->dbSchemaPrefix();
+            $diffExpr = \isMssql()
+                ? 'DATEDIFF(SECOND, he.hora_ingreso_personal, hi.hora_ingreso)'
+                : 'TIME_TO_SEC(TIMEDIFF(hi.hora_ingreso, he.hora_ingreso_personal))';
             $sql = "SELECT
-                        SUM(CASE WHEN TIME_TO_SEC(TIMEDIFF(hi.hora_ingreso, he.hora_ingreso_personal)) > 600 THEN 1 ELSE 0 END) AS tardy,
-                        SUM(CASE WHEN TIME_TO_SEC(TIMEDIFF(hi.hora_ingreso, he.hora_ingreso_personal)) <= 600 THEN 1 ELSE 0 END) AS ontime
-                    FROM fecha_registro fr
-                    INNER JOIN usuario u ON u.id_usuario = fr.id_usuario
-                    LEFT JOIN horario_ingreso hi ON hi.id_usuario = fr.id_usuario AND hi.id_fecha_registro = fr.id_fecha_registro
-                    LEFT JOIN horario_entrada_personal he ON he.id_usuario = u.id_usuario
+                        SUM(CASE WHEN {$diffExpr} > 600 THEN 1 ELSE 0 END) AS tardy,
+                        SUM(CASE WHEN {$diffExpr} <= 600 THEN 1 ELSE 0 END) AS ontime
+                    FROM {$schema}fecha_registro fr
+                    INNER JOIN {$schema}usuario u ON u.id_usuario = fr.id_usuario
+                    LEFT JOIN {$schema}horario_ingreso hi ON hi.id_usuario = fr.id_usuario AND hi.id_fecha_registro = fr.id_fecha_registro
+                    LEFT JOIN {$schema}horario_entrada_personal he ON he.id_usuario = u.id_usuario
                     WHERE fr.fecha_ingreso BETWEEN :desde AND :hasta
                       AND (u.id_tp_user IS NULL OR u.id_tp_user <> 1)
                       AND hi.hora_ingreso IS NOT NULL AND he.hora_ingreso_personal IS NOT NULL";
@@ -311,27 +335,39 @@ class AdminController extends BaseController
         $this->guard();
         $db = \conexion();
         // Traer también el rol de cada usuario
-        $usuarios = ($db->query('SELECT u.id_usuario,
-                                        CONCAT_WS(" ", u.primer_nombre, u.primer_apellido) AS nombre,
-                                        COALESCE(t.detalle_tp_user, "") AS rol
-                                 FROM usuario u
-                                 LEFT JOIN tipo_usuario t ON t.id_tp_user = u.id_tp_user
-                                 ORDER BY u.primer_apellido, u.primer_nombre'))->fetchAll() ?: [];
+        $usuarios = ($db->query("SELECT u.id_usuario,
+                                        CONCAT_WS(\" \", u.primer_nombre, u.primer_apellido) AS nombre,
+                                        COALESCE(t.detalle_tp_user, \"\") AS rol
+                                 FROM {$schema}usuario u
+                                 LEFT JOIN {$schema}tipo_usuario t ON t.id_tp_user = u.id_tp_user
+                                 ORDER BY u.primer_apellido, u.primer_nombre"))->fetchAll() ?: [];
         $uid = (int)($_GET['uid'] ?? 0);
         $fecha = $this->parseYmd($_GET['fecha'] ?? '') ?? (new \DateTime('now', new \DateTimeZone('America/Guayaquil')))->format('Y-m-d');
         $datos = ['ingreso'=>'','sl'=>'','rt'=>'','salida'=>''];
         if ($uid>0 && $fecha) {
-            $st = $db->prepare('SELECT id_fecha_registro FROM fecha_registro WHERE id_usuario=? AND fecha_ingreso=? LIMIT 1');
+            $sql = \isMssql()
+                ? "SELECT TOP 1 id_fecha_registro FROM {$schema}fecha_registro WHERE id_usuario=? AND fecha_ingreso=?"
+                : "SELECT id_fecha_registro FROM {$schema}fecha_registro WHERE id_usuario=? AND fecha_ingreso=? LIMIT 1";
+            $st = $db->prepare($sql);
             $st->execute([$uid, $fecha]);
             $idFecha = (int)($st->fetchColumn() ?: 0);
             if ($idFecha>0) {
-                $q = $db->prepare('SELECT hi.hora_ingreso, sla.hora_sl_almuerzo, rta.hora_rt_almuerzo, sa.hora_salida
-                                   FROM fecha_registro fr
-                                   LEFT JOIN horario_ingreso hi ON hi.id_usuario=fr.id_usuario AND hi.id_fecha_registro=fr.id_fecha_registro
-                                   LEFT JOIN horario_sl_almuerzo sla ON sla.id_usuario=fr.id_usuario AND sla.id_fecha_registro=fr.id_fecha_registro
-                                   LEFT JOIN horario_rt_almuerzo rta ON rta.id_usuario=fr.id_usuario AND rta.id_fecha_registro=fr.id_fecha_registro
-                                   LEFT JOIN horario_salida sa ON sa.id_usuario=fr.id_usuario AND sa.id_fecha_registro=fr.id_fecha_registro
-                                   WHERE fr.id_usuario=? AND fr.id_fecha_registro=? LIMIT 1');
+                $sql = \isMssql()
+                    ? "SELECT TOP 1 hi.hora_ingreso, sla.hora_sl_almuerzo, rta.hora_rt_almuerzo, sa.hora_salida
+                                   FROM {$schema}fecha_registro fr
+                                   LEFT JOIN {$schema}horario_ingreso hi ON hi.id_usuario=fr.id_usuario AND hi.id_fecha_registro=fr.id_fecha_registro
+                                   LEFT JOIN {$schema}horario_sl_almuerzo sla ON sla.id_usuario=fr.id_usuario AND sla.id_fecha_registro=fr.id_fecha_registro
+                                   LEFT JOIN {$schema}horario_rt_almuerzo rta ON rta.id_usuario=fr.id_usuario AND rta.id_fecha_registro=fr.id_fecha_registro
+                                   LEFT JOIN {$schema}horario_salida sa ON sa.id_usuario=fr.id_usuario AND sa.id_fecha_registro=fr.id_fecha_registro
+                                   WHERE fr.id_usuario=? AND fr.id_fecha_registro=?"
+                    : "SELECT hi.hora_ingreso, sla.hora_sl_almuerzo, rta.hora_rt_almuerzo, sa.hora_salida
+                                   FROM {$schema}fecha_registro fr
+                                   LEFT JOIN {$schema}horario_ingreso hi ON hi.id_usuario=fr.id_usuario AND hi.id_fecha_registro=fr.id_fecha_registro
+                                   LEFT JOIN {$schema}horario_sl_almuerzo sla ON sla.id_usuario=fr.id_usuario AND sla.id_fecha_registro=fr.id_fecha_registro
+                                   LEFT JOIN {$schema}horario_rt_almuerzo rta ON rta.id_usuario=fr.id_usuario AND rta.id_fecha_registro=fr.id_fecha_registro
+                                   LEFT JOIN {$schema}horario_salida sa ON sa.id_usuario=fr.id_usuario AND sa.id_fecha_registro=fr.id_fecha_registro
+                                   WHERE fr.id_usuario=? AND fr.id_fecha_registro=? LIMIT 1";
+                $q = $db->prepare($sql);
                 $q->execute([$uid, $idFecha]);
                 $row = $q->fetch(\PDO::FETCH_ASSOC) ?: [];
                 $datos['ingreso'] = $row['hora_ingreso'] ?? '';
@@ -399,13 +435,17 @@ class AdminController extends BaseController
         if (!$validTime($ingreso) || !$validTime($sl) || !$validTime($rt) || !$validTime($salida)) { $this->redirectEditTimbres('Formato de hora inválido (HH:MM:SS).', true); return; }
         try {
             $db = \conexion();
+            $schema = $this->dbSchemaPrefix();
             // Buscar id_fecha_registro
-            $st = $db->prepare('SELECT id_fecha_registro FROM fecha_registro WHERE id_usuario=? AND fecha_ingreso=? LIMIT 1');
+            $sql = \isMssql()
+                ? "SELECT TOP 1 id_fecha_registro FROM {$schema}fecha_registro WHERE id_usuario=? AND fecha_ingreso=?"
+                : "SELECT id_fecha_registro FROM {$schema}fecha_registro WHERE id_usuario=? AND fecha_ingreso=? LIMIT 1";
+            $st = $db->prepare($sql);
             $st->execute([$uid, $fecha]);
             $idFecha = (int)($st->fetchColumn() ?: 0);
             if ($idFecha<=0) {
                 // Si no existe, créalo para permitir edición manual
-                $insFr = $db->prepare('INSERT INTO fecha_registro (id_usuario, fecha_ingreso) VALUES (?, ?)');
+                $insFr = $db->prepare("INSERT INTO {$schema}fecha_registro (id_usuario, fecha_ingreso) VALUES (?, ?)");
                 $insFr->execute([$uid, $fecha]);
                 $idFecha = (int)$db->lastInsertId();
             }
@@ -413,17 +453,23 @@ class AdminController extends BaseController
             // Actualizaciones condicionales (solo si viene hora)
             if ($ingreso !== '') {
                 // Upsert ingreso
-                $q = $db->prepare('SELECT 1 FROM horario_ingreso WHERE id_usuario=? AND id_fecha_registro=? LIMIT 1');
+                $sql = \isMssql()
+                    ? "SELECT TOP 1 1 FROM {$schema}horario_ingreso WHERE id_usuario=? AND id_fecha_registro=?"
+                    : "SELECT 1 FROM {$schema}horario_ingreso WHERE id_usuario=? AND id_fecha_registro=? LIMIT 1";
+                $q = $db->prepare($sql);
                 $q->execute([$uid, $idFecha]);
                 if ($q->fetch()) {
-                    $q = $db->prepare('UPDATE horario_ingreso SET hora_ingreso=? WHERE id_usuario=? AND id_fecha_registro=?');
+                    $q = $db->prepare("UPDATE {$schema}horario_ingreso SET hora_ingreso=? WHERE id_usuario=? AND id_fecha_registro=?");
                     $q->execute([$ingreso, $uid, $idFecha]);
                 } else {
-                    $ins = $db->prepare('INSERT INTO horario_ingreso (id_usuario, id_fecha_registro, id_estado_ingreso, hora_ingreso, latitud, longitud, direccion) VALUES (?, ?, ?, ?, ?, ?, ?)');
+                    $ins = $db->prepare("INSERT INTO {$schema}horario_ingreso (id_usuario, id_fecha_registro, id_estado_ingreso, hora_ingreso, latitud, longitud, direccion) VALUES (?, ?, ?, ?, ?, ?, ?)");
                     $ins->execute([$uid, $idFecha, null, $ingreso, null, null, null]);
                 }
                 // Recalcular estado_ingreso con tolerancia de 10 minutos sobre hora_ingreso_personal
-                $hp = $db->prepare('SELECT hora_ingreso_personal FROM horario_entrada_personal WHERE id_usuario=? LIMIT 1');
+                $sql = \isMssql()
+                    ? "SELECT TOP 1 hora_ingreso_personal FROM {$schema}horario_entrada_personal WHERE id_usuario=?"
+                    : "SELECT hora_ingreso_personal FROM {$schema}horario_entrada_personal WHERE id_usuario=? LIMIT 1";
+                $hp = $db->prepare($sql);
                 $hp->execute([$uid]);
                 $progIn = $hp->fetchColumn();
                 if ($progIn) {
@@ -434,13 +480,16 @@ class AdminController extends BaseController
                     elseif ($dtIn <= $tolEnd) { $det = 'Ingreso a tiempo'; }
                     else                      { $det = 'Atraso'; }
                     $idEstado = $this->ensureCatalog($db, 'estado_ingreso', 'id_estado_ingreso', 'detalle_ingreso', $det);
-                    $q = $db->prepare('UPDATE horario_ingreso SET id_estado_ingreso=? WHERE id_usuario=? AND id_fecha_registro=?');
+                    $q = $db->prepare("UPDATE {$schema}horario_ingreso SET id_estado_ingreso=? WHERE id_usuario=? AND id_fecha_registro=?");
                     $q->execute([$idEstado, $uid, $idFecha]);
                 }
             }
             // Tomar latitud/longitud/dirección del ingreso (si existe), para reusar en inserts
             $coordLat = $coordLon = $coordDir = null;
-            $qi = $db->prepare('SELECT latitud, longitud, direccion FROM horario_ingreso WHERE id_usuario=? AND id_fecha_registro=? LIMIT 1');
+            $sql = \isMssql()
+                ? "SELECT TOP 1 latitud, longitud, direccion FROM {$schema}horario_ingreso WHERE id_usuario=? AND id_fecha_registro=?"
+                : "SELECT latitud, longitud, direccion FROM {$schema}horario_ingreso WHERE id_usuario=? AND id_fecha_registro=? LIMIT 1";
+            $qi = $db->prepare($sql);
             $qi->execute([$uid, $idFecha]);
             if ($rowIn = $qi->fetch(\PDO::FETCH_ASSOC)) {
                 $coordLat = $rowIn['latitud'];
@@ -450,10 +499,13 @@ class AdminController extends BaseController
 
             if ($sl !== '') {
                 // ¿Existe salida almuerzo?
-                $q = $db->prepare('SELECT 1 FROM horario_sl_almuerzo WHERE id_usuario=? AND id_fecha_registro=? LIMIT 1');
+                $sql = \isMssql()
+                    ? "SELECT TOP 1 1 FROM {$schema}horario_sl_almuerzo WHERE id_usuario=? AND id_fecha_registro=?"
+                    : "SELECT 1 FROM {$schema}horario_sl_almuerzo WHERE id_usuario=? AND id_fecha_registro=? LIMIT 1";
+                $q = $db->prepare($sql);
                 $q->execute([$uid, $idFecha]);
                 if ($q->fetch()) {
-                    $q = $db->prepare('UPDATE horario_sl_almuerzo SET hora_sl_almuerzo=?, latitud=?, longitud=?, direccion=? WHERE id_usuario=? AND id_fecha_registro=?');
+                    $q = $db->prepare("UPDATE {$schema}horario_sl_almuerzo SET hora_sl_almuerzo=?, latitud=?, longitud=?, direccion=? WHERE id_usuario=? AND id_fecha_registro=?");
                     $q->execute([$sl, $coordLat, $coordLon, $coordDir, $uid, $idFecha]);
                 } else {
                     if ($coordLat === null || $coordLon === null || $coordDir === null) {
@@ -461,16 +513,19 @@ class AdminController extends BaseController
                         return;
                     }
                     $idEstadoSl = $this->ensureCatalog($db, 'estado_salida_almuerzo', 'id_estado_salida_almuerzo', 'detalle_salida_almuerzo', 'Salida al almuerzo');
-                    $q = $db->prepare('INSERT INTO horario_sl_almuerzo (id_usuario, id_fecha_registro, id_estado_salida_almuerzo, hora_sl_almuerzo, latitud, longitud, direccion) VALUES (?, ?, ?, ?, ?, ?, ?)');
+                    $q = $db->prepare("INSERT INTO {$schema}horario_sl_almuerzo (id_usuario, id_fecha_registro, id_estado_salida_almuerzo, hora_sl_almuerzo, latitud, longitud, direccion) VALUES (?, ?, ?, ?, ?, ?, ?)");
                     $q->execute([$uid, $idFecha, $idEstadoSl, $sl, $coordLat, $coordLon, $coordDir]);
                 }
             }
 
             if ($rt !== '') {
-                $q = $db->prepare('SELECT 1 FROM horario_rt_almuerzo WHERE id_usuario=? AND id_fecha_registro=? LIMIT 1');
+                $sql = \isMssql()
+                    ? "SELECT TOP 1 1 FROM {$schema}horario_rt_almuerzo WHERE id_usuario=? AND id_fecha_registro=?"
+                    : "SELECT 1 FROM {$schema}horario_rt_almuerzo WHERE id_usuario=? AND id_fecha_registro=? LIMIT 1";
+                $q = $db->prepare($sql);
                 $q->execute([$uid, $idFecha]);
                 if ($q->fetch()) {
-                    $q = $db->prepare('UPDATE horario_rt_almuerzo SET hora_rt_almuerzo=?, latitud=?, longitud=?, direccion=? WHERE id_usuario=? AND id_fecha_registro=?');
+                    $q = $db->prepare("UPDATE {$schema}horario_rt_almuerzo SET hora_rt_almuerzo=?, latitud=?, longitud=?, direccion=? WHERE id_usuario=? AND id_fecha_registro=?");
                     $q->execute([$rt, $coordLat, $coordLon, $coordDir, $uid, $idFecha]);
                 } else {
                     if ($coordLat === null || $coordLon === null || $coordDir === null) {
@@ -478,19 +533,22 @@ class AdminController extends BaseController
                         return;
                     }
                     $idEstadoRt = $this->ensureCatalog($db, 'estado_retorno_almuerzo', 'id_estado_retorno_almuerzo', 'detalle_retorno_almuerzo', 'Regreso de almuerzo');
-                    $q = $db->prepare('INSERT INTO horario_rt_almuerzo (id_usuario, id_fecha_registro, id_estado_retorno_almuerzo, hora_rt_almuerzo, latitud, longitud, direccion) VALUES (?, ?, ?, ?, ?, ?, ?)');
+                    $q = $db->prepare("INSERT INTO {$schema}horario_rt_almuerzo (id_usuario, id_fecha_registro, id_estado_retorno_almuerzo, hora_rt_almuerzo, latitud, longitud, direccion) VALUES (?, ?, ?, ?, ?, ?, ?)");
                     $q->execute([$uid, $idFecha, $idEstadoRt, $rt, $coordLat, $coordLon, $coordDir]);
                 }
             }
 
             if ($salida !== '') {
                 // ¿Existe salida laboral?
-                $q = $db->prepare('SELECT 1 FROM horario_salida WHERE id_usuario=? AND id_fecha_registro=? LIMIT 1');
+                $sql = \isMssql()
+                    ? "SELECT TOP 1 1 FROM {$schema}horario_salida WHERE id_usuario=? AND id_fecha_registro=?"
+                    : "SELECT 1 FROM {$schema}horario_salida WHERE id_usuario=? AND id_fecha_registro=? LIMIT 1";
+                $q = $db->prepare($sql);
                 $q->execute([$uid, $idFecha]);
                 $existsSalida = (bool)$q->fetch();
 
                 if ($existsSalida) {
-                    $q = $db->prepare('UPDATE horario_salida SET hora_salida=?, latitud=?, longitud=?, direccion=? WHERE id_usuario=? AND id_fecha_registro=?');
+                    $q = $db->prepare("UPDATE {$schema}horario_salida SET hora_salida=?, latitud=?, longitud=?, direccion=? WHERE id_usuario=? AND id_fecha_registro=?");
                     $q->execute([$salida, $coordLat, $coordLon, $coordDir, $uid, $idFecha]);
                 } else {
                     if ($coordLat === null || $coordLon === null || $coordDir === null) {
@@ -498,7 +556,10 @@ class AdminController extends BaseController
                         return;
                     }
                     // Calcular estado de salida contra horario programado
-                    $hp = $db->prepare('SELECT hora_salida_personal FROM horario_salida_personal WHERE id_usuario=? LIMIT 1');
+                    $sql = \isMssql()
+                        ? "SELECT TOP 1 hora_salida_personal FROM {$schema}horario_salida_personal WHERE id_usuario=?"
+                        : "SELECT hora_salida_personal FROM {$schema}horario_salida_personal WHERE id_usuario=? LIMIT 1";
+                    $hp = $db->prepare($sql);
                     $hp->execute([$uid]);
                     $progOut = $hp->fetchColumn();
                     $idEstado = null;
@@ -508,12 +569,15 @@ class AdminController extends BaseController
                         $det = ($dtOut >= $dtProg) ? 'Fin de jornada laboral' : 'Salida anticipada';
                         $idEstado = $this->ensureCatalog($db, 'estado_salida', 'id_estado_salida', 'detalle_salida', $det);
                     }
-                    $q = $db->prepare('INSERT INTO horario_salida (id_usuario, id_fecha_registro, id_estado_salida, hora_salida, latitud, longitud, direccion) VALUES (?, ?, ?, ?, ?, ?, ?)');
+                    $q = $db->prepare("INSERT INTO {$schema}horario_salida (id_usuario, id_fecha_registro, id_estado_salida, hora_salida, latitud, longitud, direccion) VALUES (?, ?, ?, ?, ?, ?, ?)");
                     $q->execute([$uid, $idFecha, $idEstado, $salida, $coordLat, $coordLon, $coordDir]);
                 }
 
                 // Recalcular estado_salida (Fin de jornada / Salida anticipada) contra hora_salida_personal también para el caso UPDATE
-                $hp = $db->prepare('SELECT hora_salida_personal FROM horario_salida_personal WHERE id_usuario=? LIMIT 1');
+                $sql = \isMssql()
+                    ? "SELECT TOP 1 hora_salida_personal FROM {$schema}horario_salida_personal WHERE id_usuario=?"
+                    : "SELECT hora_salida_personal FROM {$schema}horario_salida_personal WHERE id_usuario=? LIMIT 1";
+                $hp = $db->prepare($sql);
                 $hp->execute([$uid]);
                 $progOut = $hp->fetchColumn();
                 if ($progOut) {
@@ -521,7 +585,7 @@ class AdminController extends BaseController
                     $dtOut  = new \DateTime($fecha.' '.$salida);
                     $det = ($dtOut >= $dtProg) ? 'Fin de jornada laboral' : 'Salida anticipada';
                     $idEstado = $this->ensureCatalog($db, 'estado_salida', 'id_estado_salida', 'detalle_salida', $det);
-                    $q = $db->prepare('UPDATE horario_salida SET id_estado_salida=? WHERE id_usuario=? AND id_fecha_registro=?');
+                    $q = $db->prepare("UPDATE {$schema}horario_salida SET id_estado_salida=? WHERE id_usuario=? AND id_fecha_registro=?");
                     $q->execute([$idEstado, $uid, $idFecha]);
                 }
             }
@@ -535,11 +599,15 @@ class AdminController extends BaseController
     // Asegura la existencia de un catálogo y devuelve su id
     private function ensureCatalog(\PDO $db, string $table, string $pk, string $col, string $detalle): int
     {
-        $q = $db->prepare("SELECT $pk FROM $table WHERE $col=? LIMIT 1");
+        $tableName = \dbTable($table);
+        $sql = \isMssql()
+            ? "SELECT TOP 1 $pk FROM $tableName WHERE $col=?"
+            : "SELECT $pk FROM $tableName WHERE $col=? LIMIT 1";
+        $q = $db->prepare($sql);
         $q->execute([$detalle]);
         $id = (int)($q->fetchColumn() ?: 0);
         if (!$id) {
-            $i = $db->prepare("INSERT INTO $table ($col) VALUES (?)");
+            $i = $db->prepare("INSERT INTO $tableName ($col) VALUES (?)");
             $i->execute([$detalle]);
             $id = (int)$db->lastInsertId();
         }
@@ -567,6 +635,10 @@ class AdminController extends BaseController
         if ($desde > $hasta) { [$desde, $hasta] = [$hasta, $desde]; }
         try {
             $db = \conexion();
+            $schema = $this->dbSchemaPrefix();
+            $diffExpr = \isMssql()
+                ? 'DATEDIFF(SECOND, he.hora_ingreso_personal, hi.hora_ingreso)'
+                : 'TIME_TO_SEC(TIMEDIFF(hi.hora_ingreso, he.hora_ingreso_personal))';
             $cond = ($type === 'tardy') ? ' > 600 ' : ' <= 600 ';
             $sql = "SELECT fr.fecha_ingreso AS fecha,
                            CONCAT_WS(' ', u.primer_nombre, u.primer_apellido) AS usuario,
@@ -577,16 +649,16 @@ class AdminController extends BaseController
                            hi.direccion AS dir_in,
                            hi.latitud AS lat_in,
                            hi.longitud AS lon_in
-                    FROM fecha_registro fr
-                    INNER JOIN usuario u ON u.id_usuario = fr.id_usuario
-                    LEFT JOIN tipo_usuario tu ON tu.id_tp_user = u.id_tp_user
-                    LEFT JOIN horario_ingreso hi ON hi.id_usuario = fr.id_usuario AND hi.id_fecha_registro = fr.id_fecha_registro
-                    LEFT JOIN estado_ingreso ei ON ei.id_estado_ingreso = hi.id_estado_ingreso
-                    LEFT JOIN horario_entrada_personal he ON he.id_usuario = u.id_usuario
+                    FROM {$schema}fecha_registro fr
+                    INNER JOIN {$schema}usuario u ON u.id_usuario = fr.id_usuario
+                    LEFT JOIN {$schema}tipo_usuario tu ON tu.id_tp_user = u.id_tp_user
+                    LEFT JOIN {$schema}horario_ingreso hi ON hi.id_usuario = fr.id_usuario AND hi.id_fecha_registro = fr.id_fecha_registro
+                    LEFT JOIN {$schema}estado_ingreso ei ON ei.id_estado_ingreso = hi.id_estado_ingreso
+                    LEFT JOIN {$schema}horario_entrada_personal he ON he.id_usuario = u.id_usuario
                     WHERE fr.fecha_ingreso BETWEEN :desde AND :hasta
                       AND (u.id_tp_user IS NULL OR u.id_tp_user <> 1)
                       AND hi.hora_ingreso IS NOT NULL AND he.hora_ingreso_personal IS NOT NULL
-                      AND TIME_TO_SEC(TIMEDIFF(hi.hora_ingreso, he.hora_ingreso_personal))".$cond.
+                      AND {$diffExpr}".$cond.
                     "ORDER BY fr.fecha_ingreso DESC, u.primer_apellido, u.primer_nombre";
             $st = $db->prepare($sql);
             $st->bindValue(':desde', $desde, \PDO::PARAM_STR);

@@ -8,10 +8,12 @@ use RuntimeException;
 class ControlService
 {
     private PDO $db;
+    private string $schemaPrefix;
     public function __construct(PDO $db)
     {
         $this->db = $db;
         $this->db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        $this->schemaPrefix = \isMssql() ? (\dbSchema() . '.') : '';
     }
 
     // --- Helpers compartidos ---
@@ -42,7 +44,10 @@ class ControlService
 
     private function getUserTipo(int $uid): int
     {
-        $st = $this->db->prepare('SELECT id_tp_user FROM usuario WHERE id_usuario = ? LIMIT 1');
+        $sql = \isMssql()
+            ? "SELECT TOP 1 id_tp_user FROM {$this->schemaPrefix}usuario WHERE id_usuario = ?"
+            : "SELECT id_tp_user FROM {$this->schemaPrefix}usuario WHERE id_usuario = ? LIMIT 1";
+        $st = $this->db->prepare($sql);
         $st->execute([$uid]);
         $idTpUser = (int)($st->fetchColumn() ?: 0);
         if (!$idTpUser) {
@@ -53,11 +58,14 @@ class ControlService
 
     private function getOrCreateFechaRegistro(int $uid, string $fechaYmd): int
     {
-        $st = $this->db->prepare('SELECT id_fecha_registro FROM fecha_registro WHERE id_usuario = ? AND fecha_ingreso = ? LIMIT 1');
+        $sql = \isMssql()
+            ? "SELECT TOP 1 id_fecha_registro FROM {$this->schemaPrefix}fecha_registro WHERE id_usuario = ? AND fecha_ingreso = ?"
+            : "SELECT id_fecha_registro FROM {$this->schemaPrefix}fecha_registro WHERE id_usuario = ? AND fecha_ingreso = ? LIMIT 1";
+        $st = $this->db->prepare($sql);
         $st->execute([$uid, $fechaYmd]);
         $idFecha = $st->fetchColumn();
         if (!$idFecha) {
-            $ins = $this->db->prepare('INSERT INTO fecha_registro (id_usuario, fecha_ingreso) VALUES (?, ?)');
+            $ins = $this->db->prepare("INSERT INTO {$this->schemaPrefix}fecha_registro (id_usuario, fecha_ingreso) VALUES (?, ?)");
             $ins->execute([$uid, $fechaYmd]);
             return (int)$this->db->lastInsertId();
         }
@@ -66,11 +74,15 @@ class ControlService
 
     private function ensureCatalog(string $table, string $pk, string $col, string $detalle): int
     {
-        $q = $this->db->prepare("SELECT $pk FROM $table WHERE $col = ? LIMIT 1");
+        $tableName = \dbTable($table);
+        $sql = \isMssql()
+            ? "SELECT TOP 1 $pk FROM $tableName WHERE $col = ?"
+            : "SELECT $pk FROM $tableName WHERE $col = ? LIMIT 1";
+        $q = $this->db->prepare($sql);
         $q->execute([$detalle]);
         $id = (int)($q->fetchColumn() ?: 0);
         if (!$id) {
-            $ins = $this->db->prepare("INSERT INTO $table ($col) VALUES (?)");
+            $ins = $this->db->prepare("INSERT INTO $tableName ($col) VALUES (?)");
             $ins->execute([$detalle]);
             $id = (int)$this->db->lastInsertId();
         }
@@ -91,7 +103,10 @@ class ControlService
         try {
             $idTpUser = $this->getUserTipo($uid);
 
-            $st = $this->db->prepare('SELECT id_hora_entrada, hora_ingreso_personal FROM horario_entrada_personal WHERE id_usuario = ? AND id_tp_user = ? LIMIT 1');
+            $sql = \isMssql()
+                ? "SELECT TOP 1 id_hora_entrada, hora_ingreso_personal FROM {$this->schemaPrefix}horario_entrada_personal WHERE id_usuario = ? AND id_tp_user = ?"
+                : "SELECT id_hora_entrada, hora_ingreso_personal FROM {$this->schemaPrefix}horario_entrada_personal WHERE id_usuario = ? AND id_tp_user = ? LIMIT 1";
+            $st = $this->db->prepare($sql);
             $st->execute([$uid, $idTpUser]);
             $horario = $st->fetch(PDO::FETCH_ASSOC);
             if (!$horario) {
@@ -102,7 +117,10 @@ class ControlService
 
             $idFecha = $this->getOrCreateFechaRegistro($uid, $hoy);
 
-            $st = $this->db->prepare('SELECT 1 FROM horario_ingreso WHERE id_usuario = ? AND id_fecha_registro = ? LIMIT 1');
+            $sql = \isMssql()
+                ? "SELECT TOP 1 1 FROM {$this->schemaPrefix}horario_ingreso WHERE id_usuario = ? AND id_fecha_registro = ?"
+                : "SELECT 1 FROM {$this->schemaPrefix}horario_ingreso WHERE id_usuario = ? AND id_fecha_registro = ? LIMIT 1";
+            $st = $this->db->prepare($sql);
             $st->execute([$uid, $idFecha]);
             if ($st->fetch()) {
                 $this->db->rollBack();
@@ -124,7 +142,7 @@ class ControlService
             $idEstado = $this->ensureCatalog('estado_ingreso', 'id_estado_ingreso', 'detalle_ingreso', $detalleEstado);
 
             // Guardar también el id_hora_entrada para respetar la FK
-            $ins = $this->db->prepare('INSERT INTO horario_ingreso (id_usuario, id_fecha_registro, id_estado_ingreso, id_hora_entrada, hora_ingreso, latitud, longitud, direccion) VALUES (?, ?, ?, ?, ?, ?, ?, ?)');
+            $ins = $this->db->prepare("INSERT INTO {$this->schemaPrefix}horario_ingreso (id_usuario, id_fecha_registro, id_estado_ingreso, id_hora_entrada, hora_ingreso, latitud, longitud, direccion) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
             $ins->execute([$uid, $idFecha, $idEstado, $idHoraEntrada, $ahora, $latitud, $longitud, $direccion]);
 
             $this->db->commit();
@@ -149,7 +167,10 @@ class ControlService
         $this->db->beginTransaction();
         try {
             // Fecha del día (NO crear si falta)
-            $q = $this->db->prepare('SELECT id_fecha_registro FROM fecha_registro WHERE id_usuario = ? AND fecha_ingreso = ? LIMIT 1 FOR UPDATE');
+            $sql = \isMssql()
+                ? "SELECT TOP 1 id_fecha_registro FROM {$this->schemaPrefix}fecha_registro WITH (UPDLOCK, ROWLOCK) WHERE id_usuario = ? AND fecha_ingreso = ?"
+                : "SELECT id_fecha_registro FROM {$this->schemaPrefix}fecha_registro WHERE id_usuario = ? AND fecha_ingreso = ? LIMIT 1 FOR UPDATE";
+            $q = $this->db->prepare($sql);
             $q->execute([$uid, $hoy]);
             $idFecha = $q->fetchColumn();
             if (!$idFecha) {
@@ -159,7 +180,10 @@ class ControlService
             $idFecha = (int)$idFecha;
 
             // Debe existir ingreso
-            $q = $this->db->prepare('SELECT id_hora_ingreso FROM horario_ingreso WHERE id_usuario = ? AND id_fecha_registro = ? LIMIT 1');
+            $sql = \isMssql()
+                ? "SELECT TOP 1 id_hora_ingreso FROM {$this->schemaPrefix}horario_ingreso WHERE id_usuario = ? AND id_fecha_registro = ?"
+                : "SELECT id_hora_ingreso FROM {$this->schemaPrefix}horario_ingreso WHERE id_usuario = ? AND id_fecha_registro = ? LIMIT 1";
+            $q = $this->db->prepare($sql);
             $q->execute([$uid, $idFecha]);
             if (!($q->fetchColumn())) {
                 $this->db->rollBack();
@@ -167,7 +191,10 @@ class ControlService
             }
 
             // Evitar duplicado
-            $q = $this->db->prepare('SELECT 1 FROM horario_sl_almuerzo WHERE id_usuario = ? AND id_fecha_registro = ? LIMIT 1');
+            $sql = \isMssql()
+                ? "SELECT TOP 1 1 FROM {$this->schemaPrefix}horario_sl_almuerzo WHERE id_usuario = ? AND id_fecha_registro = ?"
+                : "SELECT 1 FROM {$this->schemaPrefix}horario_sl_almuerzo WHERE id_usuario = ? AND id_fecha_registro = ? LIMIT 1";
+            $q = $this->db->prepare($sql);
             $q->execute([$uid, $idFecha]);
             if ($q->fetch()) {
                 $this->db->rollBack();
@@ -176,7 +203,7 @@ class ControlService
 
             $idEstado = $this->ensureCatalog('estado_salida_almuerzo', 'id_estado_salida_almuerzo', 'detalle_salida_almuerzo', 'Salida al almuerzo');
 
-            $ins = $this->db->prepare('INSERT INTO horario_sl_almuerzo (id_usuario, id_fecha_registro, id_estado_salida_almuerzo, hora_sl_almuerzo, latitud, longitud, direccion) VALUES (?, ?, ?, ?, ?, ?, ?)');
+            $ins = $this->db->prepare("INSERT INTO {$this->schemaPrefix}horario_sl_almuerzo (id_usuario, id_fecha_registro, id_estado_salida_almuerzo, hora_sl_almuerzo, latitud, longitud, direccion) VALUES (?, ?, ?, ?, ?, ?, ?)");
             $ins->execute([$uid, $idFecha, $idEstado, $ahora, $latitud, $longitud, $direccion]);
 
             $this->db->commit();
@@ -200,7 +227,10 @@ class ControlService
 
         $this->db->beginTransaction();
         try {
-            $q = $this->db->prepare('SELECT id_fecha_registro FROM fecha_registro WHERE id_usuario = ? AND fecha_ingreso = ? LIMIT 1 FOR UPDATE');
+            $sql = \isMssql()
+                ? "SELECT TOP 1 id_fecha_registro FROM {$this->schemaPrefix}fecha_registro WITH (UPDLOCK, ROWLOCK) WHERE id_usuario = ? AND fecha_ingreso = ?"
+                : "SELECT id_fecha_registro FROM {$this->schemaPrefix}fecha_registro WHERE id_usuario = ? AND fecha_ingreso = ? LIMIT 1 FOR UPDATE";
+            $q = $this->db->prepare($sql);
             $q->execute([$uid, $hoy]);
             $idFecha = $q->fetchColumn();
             if (!$idFecha) {
@@ -210,7 +240,10 @@ class ControlService
             $idFecha = (int)$idFecha;
 
             // Evitar duplicado
-            $q = $this->db->prepare('SELECT 1 FROM horario_rt_almuerzo WHERE id_usuario = ? AND id_fecha_registro = ? LIMIT 1');
+            $sql = \isMssql()
+                ? "SELECT TOP 1 1 FROM {$this->schemaPrefix}horario_rt_almuerzo WHERE id_usuario = ? AND id_fecha_registro = ?"
+                : "SELECT 1 FROM {$this->schemaPrefix}horario_rt_almuerzo WHERE id_usuario = ? AND id_fecha_registro = ? LIMIT 1";
+            $q = $this->db->prepare($sql);
             $q->execute([$uid, $idFecha]);
             if ($q->fetch()) {
                 $this->db->rollBack();
@@ -219,7 +252,7 @@ class ControlService
 
             $idEstado = $this->ensureCatalog('estado_retorno_almuerzo', 'id_estado_retorno_almuerzo', 'detalle_retorno_almuerzo', 'Regreso de almuerzo');
 
-            $ins = $this->db->prepare('INSERT INTO horario_rt_almuerzo (id_usuario, id_fecha_registro, id_estado_retorno_almuerzo, hora_rt_almuerzo, latitud, longitud, direccion) VALUES (?, ?, ?, ?, ?, ?, ?)');
+            $ins = $this->db->prepare("INSERT INTO {$this->schemaPrefix}horario_rt_almuerzo (id_usuario, id_fecha_registro, id_estado_retorno_almuerzo, hora_rt_almuerzo, latitud, longitud, direccion) VALUES (?, ?, ?, ?, ?, ?, ?)");
             $ins->execute([$uid, $idFecha, $idEstado, $ahora, $latitud, $longitud, $direccion]);
 
             $this->db->commit();
@@ -243,7 +276,10 @@ class ControlService
 
         $this->db->beginTransaction();
         try {
-            $q = $this->db->prepare('SELECT id_fecha_registro FROM fecha_registro WHERE id_usuario = ? AND fecha_ingreso = ? LIMIT 1 FOR UPDATE');
+            $sql = \isMssql()
+                ? "SELECT TOP 1 id_fecha_registro FROM {$this->schemaPrefix}fecha_registro WITH (UPDLOCK, ROWLOCK) WHERE id_usuario = ? AND fecha_ingreso = ?"
+                : "SELECT id_fecha_registro FROM {$this->schemaPrefix}fecha_registro WHERE id_usuario = ? AND fecha_ingreso = ? LIMIT 1 FOR UPDATE";
+            $q = $this->db->prepare($sql);
             $q->execute([$uid, $hoy]);
             $idFecha = $q->fetchColumn();
             if (!$idFecha) {
@@ -253,7 +289,10 @@ class ControlService
             $idFecha = (int)$idFecha;
 
             // Evitar duplicado salida laboral
-            $q = $this->db->prepare('SELECT 1 FROM horario_salida WHERE id_usuario = ? AND id_fecha_registro = ? LIMIT 1');
+            $sql = \isMssql()
+                ? "SELECT TOP 1 1 FROM {$this->schemaPrefix}horario_salida WHERE id_usuario = ? AND id_fecha_registro = ?"
+                : "SELECT 1 FROM {$this->schemaPrefix}horario_salida WHERE id_usuario = ? AND id_fecha_registro = ? LIMIT 1";
+            $q = $this->db->prepare($sql);
             $q->execute([$uid, $idFecha]);
             if ($q->fetch()) {
                 $this->db->rollBack();
@@ -261,7 +300,10 @@ class ControlService
             }
 
             $idTpUser = $this->getUserTipo($uid);
-            $q = $this->db->prepare('SELECT hora_salida_personal FROM horario_salida_personal WHERE id_usuario = ? AND id_tp_user = ? LIMIT 1');
+            $sql = \isMssql()
+                ? "SELECT TOP 1 hora_salida_personal FROM {$this->schemaPrefix}horario_salida_personal WHERE id_usuario = ? AND id_tp_user = ?"
+                : "SELECT hora_salida_personal FROM {$this->schemaPrefix}horario_salida_personal WHERE id_usuario = ? AND id_tp_user = ? LIMIT 1";
+            $q = $this->db->prepare($sql);
             $q->execute([$uid, $idTpUser]);
             $horaSalidaProg = $q->fetchColumn();
             if (!$horaSalidaProg) {
@@ -274,23 +316,29 @@ class ControlService
             $idEstadoSalida = $this->ensureCatalog('estado_salida', 'id_estado_salida', 'detalle_salida', $detalleEstado);
 
             // Placeholders de almuerzo si faltan (direccion='NA')
-            $q = $this->db->prepare('SELECT 1 FROM horario_sl_almuerzo WHERE id_usuario = ? AND id_fecha_registro = ? LIMIT 1 FOR UPDATE');
+            $sql = \isMssql()
+                ? "SELECT TOP 1 1 FROM {$this->schemaPrefix}horario_sl_almuerzo WITH (UPDLOCK, ROWLOCK) WHERE id_usuario = ? AND id_fecha_registro = ?"
+                : "SELECT 1 FROM {$this->schemaPrefix}horario_sl_almuerzo WHERE id_usuario = ? AND id_fecha_registro = ? LIMIT 1 FOR UPDATE";
+            $q = $this->db->prepare($sql);
             $q->execute([$uid, $idFecha]);
             if (!$q->fetchColumn()) {
                 $idEstadoSalidaAlm = $this->ensureCatalog('estado_salida_almuerzo', 'id_estado_salida_almuerzo', 'detalle_salida_almuerzo', 'No registrado');
-                $ins = $this->db->prepare('INSERT INTO horario_sl_almuerzo (id_usuario, id_fecha_registro, id_estado_salida_almuerzo, hora_sl_almuerzo, latitud, longitud, direccion) VALUES (?, ?, ?, ?, ?, ?, ?)');
+                $ins = $this->db->prepare("INSERT INTO {$this->schemaPrefix}horario_sl_almuerzo (id_usuario, id_fecha_registro, id_estado_salida_almuerzo, hora_sl_almuerzo, latitud, longitud, direccion) VALUES (?, ?, ?, ?, ?, ?, ?)");
                 $ins->execute([$uid, $idFecha, $idEstadoSalidaAlm, '00:00:00', '0.000000', '0.000000', 'NA']);
             }
 
-            $q = $this->db->prepare('SELECT 1 FROM horario_rt_almuerzo WHERE id_usuario = ? AND id_fecha_registro = ? LIMIT 1 FOR UPDATE');
+            $sql = \isMssql()
+                ? "SELECT TOP 1 1 FROM {$this->schemaPrefix}horario_rt_almuerzo WITH (UPDLOCK, ROWLOCK) WHERE id_usuario = ? AND id_fecha_registro = ?"
+                : "SELECT 1 FROM {$this->schemaPrefix}horario_rt_almuerzo WHERE id_usuario = ? AND id_fecha_registro = ? LIMIT 1 FOR UPDATE";
+            $q = $this->db->prepare($sql);
             $q->execute([$uid, $idFecha]);
             if (!$q->fetchColumn()) {
                 $idEstadoRet = $this->ensureCatalog('estado_retorno_almuerzo', 'id_estado_retorno_almuerzo', 'detalle_retorno_almuerzo', 'No registrado');
-                $ins = $this->db->prepare('INSERT INTO horario_rt_almuerzo (id_usuario, id_fecha_registro, id_estado_retorno_almuerzo, hora_rt_almuerzo, latitud, longitud, direccion) VALUES (?, ?, ?, ?, ?, ?, ?)');
+                $ins = $this->db->prepare("INSERT INTO {$this->schemaPrefix}horario_rt_almuerzo (id_usuario, id_fecha_registro, id_estado_retorno_almuerzo, hora_rt_almuerzo, latitud, longitud, direccion) VALUES (?, ?, ?, ?, ?, ?, ?)");
                 $ins->execute([$uid, $idFecha, $idEstadoRet, '00:00:00', '0.000000', '0.000000', 'NA']);
             }
 
-            $ins = $this->db->prepare('INSERT INTO horario_salida (id_usuario, id_fecha_registro, id_estado_salida, hora_salida, latitud, longitud, direccion) VALUES (?, ?, ?, ?, ?, ?, ?)');
+            $ins = $this->db->prepare("INSERT INTO {$this->schemaPrefix}horario_salida (id_usuario, id_fecha_registro, id_estado_salida, hora_salida, latitud, longitud, direccion) VALUES (?, ?, ?, ?, ?, ?, ?)");
             $ins->execute([$uid, $idFecha, $idEstadoSalida, $ahora, $latitud, $longitud, $direccion]);
 
             $this->db->commit();
@@ -335,7 +383,8 @@ class ControlService
 
     private function docenteSlotUsed(string $table, string $timeCol, int $uid, int $idFecha, string $tz, string $ahora, string $type): bool
     {
-        $q = $this->db->prepare("SELECT $timeCol FROM $table WHERE id_usuario = ? AND id_fecha_registro = ? ORDER BY $timeCol ASC");
+        $tableName = \dbTable($table);
+        $q = $this->db->prepare("SELECT $timeCol FROM $tableName WHERE id_usuario = ? AND id_fecha_registro = ? ORDER BY $timeCol ASC");
         $q->execute([$uid, $idFecha]);
         $rows = $q->fetchAll(PDO::FETCH_COLUMN) ?: [];
         $slotNow = $this->docenteSlotIndex($type, $tz, $ahora);
@@ -369,7 +418,7 @@ class ControlService
         try {
             $idFecha = $this->getOrCreateFechaRegistro($uid, $hoy);
             // Limite 3 por día
-            $q = $this->db->prepare('SELECT COUNT(*) FROM horario_docente_ingreso_1 WHERE id_usuario = ? AND id_fecha_registro = ?');
+            $q = $this->db->prepare("SELECT COUNT(*) FROM {$this->schemaPrefix}horario_docente_ingreso_1 WHERE id_usuario = ? AND id_fecha_registro = ?");
             $q->execute([$uid, $idFecha]);
             if ((int)$q->fetchColumn() >= 3) {
                 $this->db->rollBack();
@@ -384,7 +433,7 @@ class ControlService
                 $this->db->rollBack();
                 return 'Ya registraste en esta ventana de ingreso.';
             }
-            $ins = $this->db->prepare('INSERT INTO horario_docente_ingreso_1 (id_usuario, id_fecha_registro, hora_ing_doc, latitud, longitud, direccion) VALUES (?, ?, ?, ?, ?, ?)');
+            $ins = $this->db->prepare("INSERT INTO {$this->schemaPrefix}horario_docente_ingreso_1 (id_usuario, id_fecha_registro, hora_ing_doc, latitud, longitud, direccion) VALUES (?, ?, ?, ?, ?, ?)");
             $ins->execute([$uid, $idFecha, $ahora, $latitud, $longitud, $direccion]);
             $this->db->commit();
             return 'Ingreso docente registrado a las ' . $ahora . '.';
@@ -413,7 +462,7 @@ class ControlService
         $this->db->beginTransaction();
         try {
             $idFecha = $this->getOrCreateFechaRegistro($uid, $hoy);
-            $q = $this->db->prepare('SELECT COUNT(*) FROM horario_fin_docente_1 WHERE id_usuario = ? AND id_fecha_registro = ?');
+            $q = $this->db->prepare("SELECT COUNT(*) FROM {$this->schemaPrefix}horario_fin_docente_1 WHERE id_usuario = ? AND id_fecha_registro = ?");
             $q->execute([$uid, $idFecha]);
             if ((int)$q->fetchColumn() >= 3) {
                 $this->db->rollBack();
@@ -427,7 +476,7 @@ class ControlService
                 $this->db->rollBack();
                 return 'Ya registraste en esta ventana de fin.';
             }
-            $ins = $this->db->prepare('INSERT INTO horario_fin_docente_1 (id_usuario, id_fecha_registro, hora_sl_doc, latitud, longitud, direccion) VALUES (?, ?, ?, ?, ?, ?)');
+            $ins = $this->db->prepare("INSERT INTO {$this->schemaPrefix}horario_fin_docente_1 (id_usuario, id_fecha_registro, hora_sl_doc, latitud, longitud, direccion) VALUES (?, ?, ?, ?, ?, ?)");
             $ins->execute([$uid, $idFecha, $ahora, $latitud, $longitud, $direccion]);
             $this->db->commit();
             return 'Fin docente registrado a las ' . $ahora . '.';

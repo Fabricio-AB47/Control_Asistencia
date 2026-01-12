@@ -11,6 +11,7 @@ app_boot_session();
 if (function_exists('app_ensure_csrf_token')) {
     app_ensure_csrf_token();
 }
+$schema = (function_exists('isMssql') && isMssql()) ? (dbSchema() . '.') : '';
 
 $error = "";
 $ip = getClientIP();
@@ -41,7 +42,10 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['select_user_id'])) {
         include __DIR__ . "/app/Views/auth/login.php";
         exit();
     }
-    $stmt = $db->prepare("SELECT u.id_usuario, u.primer_apellido, u.primer_nombre, u.correo, u.pwd, u.id_tp_user AS id_tipo, t.detalle_tp_user AS nombre_funcion FROM usuario u INNER JOIN tipo_usuario t ON u.id_tp_user = t.id_tp_user WHERE u.id_usuario = ? LIMIT 1");
+    $sql = \isMssql()
+        ? "SELECT TOP 1 u.id_usuario, u.primer_apellido, u.primer_nombre, u.correo, u.pwd, u.id_tp_user AS id_tipo, t.detalle_tp_user AS nombre_funcion FROM {$schema}usuario u INNER JOIN {$schema}tipo_usuario t ON u.id_tp_user = t.id_tp_user WHERE u.id_usuario = ?"
+        : "SELECT u.id_usuario, u.primer_apellido, u.primer_nombre, u.correo, u.pwd, u.id_tp_user AS id_tipo, t.detalle_tp_user AS nombre_funcion FROM {$schema}usuario u INNER JOIN {$schema}tipo_usuario t ON u.id_tp_user = t.id_tp_user WHERE u.id_usuario = ? LIMIT 1";
+    $stmt = $db->prepare($sql);
     $stmt->execute([$selId]);
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
     if ($user) {
@@ -75,11 +79,14 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && !isset($_POST['select_user_id'])) {
         $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
         // Buscar todas las cuentas por correo (permitimos correos repetidos)
-        $stmt = $db->prepare(
-            "SELECT u.id_usuario, u.primer_apellido, u.primer_nombre, u.correo, u.pwd, u.id_tp_user AS id_tipo, t.detalle_tp_user AS nombre_funcion
-               FROM usuario u INNER JOIN tipo_usuario t ON u.id_tp_user = t.id_tp_user
-              WHERE u.correo = ? LIMIT 10"
-        );
+        $sql = \isMssql()
+            ? "SELECT TOP 10 u.id_usuario, u.primer_apellido, u.primer_nombre, u.correo, u.pwd, u.id_tp_user AS id_tipo, t.detalle_tp_user AS nombre_funcion
+               FROM {$schema}usuario u INNER JOIN {$schema}tipo_usuario t ON u.id_tp_user = t.id_tp_user
+              WHERE u.correo = ?"
+            : "SELECT u.id_usuario, u.primer_apellido, u.primer_nombre, u.correo, u.pwd, u.id_tp_user AS id_tipo, t.detalle_tp_user AS nombre_funcion
+               FROM {$schema}usuario u INNER JOIN {$schema}tipo_usuario t ON u.id_tp_user = t.id_tp_user
+              WHERE u.correo = ? LIMIT 10";
+        $stmt = $db->prepare($sql);
         $stmt->execute([$usuario]);
         $rows = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
 
@@ -94,7 +101,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && !isset($_POST['select_user_id'])) {
                 } elseif ($password === $r['pwd']) {
                     // Re-hash si estaba en texto plano
                     $hashed_password = password_hash($password, PASSWORD_BCRYPT);
-                    $updateStmt = $db->prepare("UPDATE usuario SET pwd = ? WHERE id_usuario = ?");
+                    $updateStmt = $db->prepare("UPDATE {$schema}usuario SET pwd = ? WHERE id_usuario = ?");
                     $updateStmt->execute([$hashed_password, $r['id_usuario']]);
                     $r['pwd'] = $hashed_password;
                     $matches[] = $r;

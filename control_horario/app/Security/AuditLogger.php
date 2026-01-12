@@ -92,12 +92,14 @@ class AuditLogger
     private function log(string $eventType, array $data): void
     {
         $timestamp = date('Y-m-d H:i:s');
+        $schema = (function_exists('isMssql') && isMssql()) ? (dbSchema() . '.') : '';
+        $nowFn = (function_exists('isMssql') && isMssql()) ? 'GETDATE()' : 'NOW()';
         
         // Intenta insertar en la base de datos (requiere tabla de auditoría)
         try {
             $stmt = $this->db->prepare(
-                'INSERT INTO audit_log (user_id, event_type, event_data, ip_address, created_at) 
-                 VALUES (?, ?, ?, ?, NOW())'
+                "INSERT INTO {$schema}audit_log (user_id, event_type, event_data, ip_address, created_at)
+                 VALUES (?, ?, ?, ?, {$nowFn})"
             );
             $stmt->execute([
                 $this->userId,
