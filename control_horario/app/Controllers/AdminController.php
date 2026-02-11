@@ -48,7 +48,7 @@ class AdminController extends BaseController
             'nombre'   => $nombre,
             'apellido' => $apellido,
             'roles'    => $roles,
-            'base'     => (function_exists('appBasePath') ? appBasePath() : ''),
+            'base'     => (function_exists('appRouterBase') ? appRouterBase() : (function_exists('appAssetBase') ? appAssetBase() : '')),
             'msg'      => $_GET['msg'] ?? '',
             'err'      => $_GET['err'] ?? '',
         ]);
@@ -197,9 +197,9 @@ class AdminController extends BaseController
         }
     }private function redirectUsers(string $message, bool $isError=false): void
     {
-        $base = function_exists('appBasePath') ? appBasePath() : '';
+        $base = function_exists('appRouterBase') ? appRouterBase() : (function_exists('appAssetBase') ? appAssetBase() : '');
         $q = $isError ? ('err=' . urlencode($message)) : ('msg=' . urlencode($message));
-        header('Location: ' . $base . '/index.php?r=admin&action=users&' . $q);
+        header('Location: ' . rtrim($base, '/') . '/index.php?r=admin&action=users&' . $q);
         exit;
     }
 
@@ -209,7 +209,10 @@ class AdminController extends BaseController
         $this->guard();
         $db = \conexion();
         $schema = $this->dbSchemaPrefix();
-        $usuarios = ($db->query("SELECT id_usuario, CONCAT_WS(\" \", primer_nombre, primer_apellido) AS nombre FROM {$schema}usuario ORDER BY primer_apellido, primer_nombre"))->fetchAll() ?: [];
+        $nombreExpr = \isMssql()
+            ? "LTRIM(RTRIM(COALESCE(primer_nombre, '') + ' ' + COALESCE(primer_apellido, '')))"
+            : "CONCAT_WS(' ', primer_nombre, primer_apellido)";
+        $usuarios = ($db->query("SELECT id_usuario, {$nombreExpr} AS nombre FROM {$schema}usuario ORDER BY primer_apellido, primer_nombre"))->fetchAll() ?: [];
         $uidSel = (int)($_GET['uid'] ?? 0);
         $currIn = $currOut = '';
         if ($uidSel>0) {
@@ -249,6 +252,7 @@ class AdminController extends BaseController
         if (!$validTime($horaIn) || !$validTime($horaOut)) { $this->redirectSchedules('Formato de hora inválido (HH:MM:SS).', true); return; }
         try {
             $db = \conexion();
+            $schema = $this->dbSchemaPrefix();
             // obtener rol del usuario para guardar id_tp_user en tablas de horario
             $sql = \isMssql()
                 ? "SELECT TOP 1 id_tp_user FROM {$schema}usuario WHERE id_usuario=?"
@@ -285,9 +289,9 @@ class AdminController extends BaseController
 
     private function redirectSchedules(string $message, bool $isError=false): void
     {
-        $base = function_exists('appBasePath') ? appBasePath() : '';
+        $base = function_exists('appRouterBase') ? appRouterBase() : (function_exists('appAssetBase') ? appAssetBase() : '');
         $q = $isError ? ('err=' . urlencode($message)) : ('msg=' . urlencode($message));
-        header('Location: ' . $base . '/index.php?r=admin&action=schedules&' . $q);
+        header('Location: ' . rtrim($base, '/') . '/index.php?r=admin&action=schedules&' . $q);
         exit;
     }
 
@@ -334,9 +338,13 @@ class AdminController extends BaseController
     {
         $this->guard();
         $db = \conexion();
+        $schema = $this->dbSchemaPrefix();
+        $nombreExpr = \isMssql()
+            ? "LTRIM(RTRIM(COALESCE(u.primer_nombre, '') + ' ' + COALESCE(u.primer_apellido, '')))"
+            : "CONCAT_WS(' ', u.primer_nombre, u.primer_apellido)";
         // Traer también el rol de cada usuario
         $usuarios = ($db->query("SELECT u.id_usuario,
-                                        CONCAT_WS(\" \", u.primer_nombre, u.primer_apellido) AS nombre,
+                                        {$nombreExpr} AS nombre,
                                         COALESCE(t.detalle_tp_user, \"\") AS rol
                                  FROM {$schema}usuario u
                                  LEFT JOIN {$schema}tipo_usuario t ON t.id_tp_user = u.id_tp_user
@@ -636,12 +644,15 @@ class AdminController extends BaseController
         try {
             $db = \conexion();
             $schema = $this->dbSchemaPrefix();
+            $usuarioExpr = \isMssql()
+                ? "LTRIM(RTRIM(COALESCE(u.primer_nombre, '') + ' ' + COALESCE(u.primer_apellido, '')))"
+                : "CONCAT_WS(' ', u.primer_nombre, u.primer_apellido)";
             $diffExpr = \isMssql()
                 ? 'DATEDIFF(SECOND, he.hora_ingreso_personal, hi.hora_ingreso)'
                 : 'TIME_TO_SEC(TIMEDIFF(hi.hora_ingreso, he.hora_ingreso_personal))';
             $cond = ($type === 'tardy') ? ' > 600 ' : ' <= 600 ';
             $sql = "SELECT fr.fecha_ingreso AS fecha,
-                           CONCAT_WS(' ', u.primer_nombre, u.primer_apellido) AS usuario,
+                           {$usuarioExpr} AS usuario,
                            tu.detalle_tp_user AS rol,
                            he.hora_ingreso_personal AS hora_prog_in,
                            hi.hora_ingreso,

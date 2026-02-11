@@ -91,11 +91,21 @@ class ReporteService
 
     public function timbresAll(string $desde, string $hasta, ?string $nameFilter = null, ?string $rolFilter = null): array
     {
+        $usuarioExpr = \isMssql()
+            ? "LTRIM(RTRIM(COALESCE(u.primer_nombre, '') + ' ' + COALESCE(u.primer_apellido, '')))"
+            : "CONCAT_WS(' ', u.primer_nombre, u.primer_apellido)";
+        $nameSearchExpr = \isMssql()
+            ? "LTRIM(RTRIM(COALESCE(u.primer_nombre, '') + ' ' + COALESCE(u.segundo_nombre, '') + ' ' + COALESCE(u.primer_apellido, '') + ' ' + COALESCE(u.segundo_apellido, '')))"
+            : "CONCAT_WS(' ', u.primer_nombre, u.segundo_nombre, u.primer_apellido, u.segundo_apellido)";
+        $toUpper = static function (string $v): string {
+            return function_exists('mb_strtoupper') ? mb_strtoupper($v, 'UTF-8') : strtoupper($v);
+        };
+
         $sql = "
         SELECT DISTINCT
             fr.fecha_ingreso                                     AS fecha,
             u.id_usuario,
-            CONCAT_WS(' ', u.primer_nombre, u.primer_apellido)   AS usuario,
+            {$usuarioExpr}                                        AS usuario,
             tu.detalle_tp_user                                   AS rol,
             he.hora_ingreso_personal                              AS hora_prog_in,
             hs.hora_salida_personal                               AS hora_prog_out,
@@ -150,12 +160,12 @@ class ReporteService
         $filters = '';
         $params = [':desde'=>$desde, ':hasta'=>$hasta];
         if ($nameFilter !== null && $nameFilter !== '') {
-            $filters .= " AND UPPER(CONCAT_WS(' ', u.primer_nombre, u.segundo_nombre, u.primer_apellido, u.segundo_apellido)) LIKE :q ";
-            $params[':q'] = '%' . mb_strtoupper($nameFilter, 'UTF-8') . '%';
+            $filters .= " AND UPPER({$nameSearchExpr}) LIKE :q ";
+            $params[':q'] = '%' . $toUpper($nameFilter) . '%';
         }
         if ($rolFilter !== null && $rolFilter !== '') {
             $filters .= " AND UPPER(tu.detalle_tp_user) = :rol ";
-            $params[':rol'] = mb_strtoupper($rolFilter, 'UTF-8');
+            $params[':rol'] = $toUpper($rolFilter);
         }
         $sql = str_replace('/**filters**/', $filters, $sql);
 
