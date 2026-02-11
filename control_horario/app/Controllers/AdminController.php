@@ -345,7 +345,7 @@ class AdminController extends BaseController
         // Traer también el rol de cada usuario
         $usuarios = ($db->query("SELECT u.id_usuario,
                                         {$nombreExpr} AS nombre,
-                                        COALESCE(t.detalle_tp_user, \"\") AS rol
+                                        COALESCE(t.detalle_tp_user, '') AS rol
                                  FROM {$schema}usuario u
                                  LEFT JOIN {$schema}tipo_usuario t ON t.id_tp_user = u.id_tp_user
                                  ORDER BY u.primer_apellido, u.primer_nombre"))->fetchAll() ?: [];

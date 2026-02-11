@@ -155,7 +155,7 @@ class ReporteService
         WHERE fr.fecha_ingreso BETWEEN :desde AND :hasta
           AND (u.id_tp_user IS NULL OR u.id_tp_user <> 1)
           /**filters**/
-        ORDER BY fr.fecha_ingreso DESC, u.primer_apellido, u.primer_nombre";
+        ORDER BY fr.fecha_ingreso DESC, usuario";
 
         $filters = '';
         $params = [':desde'=>$desde, ':hasta'=>$hasta];
